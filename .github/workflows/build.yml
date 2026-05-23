@@ -74,17 +74,17 @@ jobs:
           node-version: lts/*
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
-      - uses: swatinem/rust-cache@v2
-        with:
-          workspaces: ./src-tauri -> target
       - run: npm ci
       - name: Cargo build (macOS)
-        run: cd src-tauri && cargo build --release
+        run: cd src-tauri && cargo build --release -v 2>&1 | tee ../macos-cargo.log
       - name: Tauri bundle (macOS)
         run: npm run tauri -- build -v 2>&1 | tee macos-tauri-build.log
-      - name: Upload macOS build log on failure
+      - name: Upload macOS logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: macos-build-log
-          path: macos-tauri-build.log
+          path: |
+            macos-cargo.log
+            macos-tauri-build.log
+          if-no-files-found: ignore

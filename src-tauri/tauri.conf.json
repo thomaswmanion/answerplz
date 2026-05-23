@@ -29,7 +29,6 @@
     "active": true,
     "targets": "all",
     "macOS": {
-      "signingIdentity": "-",
       "infoPlist": "Info.plist"
     },
     "icon": [
