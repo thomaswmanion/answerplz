@@ -78,4 +78,13 @@ jobs:
         with:
           workspaces: ./src-tauri -> target
       - run: npm ci
-      - run: npm run tauri -- build
+      - name: Cargo build (macOS)
+        run: cd src-tauri && cargo build --release
+      - name: Tauri bundle (macOS)
+        run: npm run tauri -- build -v 2>&1 | tee macos-tauri-build.log
+      - name: Upload macOS build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-log
+          path: macos-tauri-build.log
