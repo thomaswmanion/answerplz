@@ -1,5 +1,5 @@
-# Build installers on all platforms, then attach to a GitHub Release.
-# Faster iteration: see build.yml (runs on every push to main).
+# Build installers on Linux, Windows, and macOS (Apple Silicon).
+# Intel Mac (x86_64) cross-compile on ARM runners is unreliable — omitted for now.
 
 name: Release
 
@@ -38,11 +38,6 @@ jobs:
             args: ""
             rust_targets: ""
             artifact: macos-aarch64
-          - name: macos-x64
-            runner: macos-latest
-            args: --target x86_64-apple-darwin
-            rust_targets: x86_64-apple-darwin
-            artifact: macos-x64
 
     runs-on: ${{ matrix.runner }}
 
@@ -77,6 +72,7 @@ jobs:
           targets: ${{ matrix.rust_targets }}
 
       - uses: swatinem/rust-cache@v2
+        if: matrix.runner != 'macos-latest'
         with:
           workspaces: ./src-tauri -> target
           key: ${{ matrix.artifact }}
@@ -84,7 +80,18 @@ jobs:
       - run: npm ci
 
       - name: Build Tauri bundles
-        run: npm run tauri -- build ${{ matrix.args }}
+        env:
+          CI: true
+          APPLE_SIGNING_IDENTITY: "-"
+        run: npm run tauri -- build ${{ matrix.args }} 2>&1 | tee tauri-build.log
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}-log
+          path: tauri-build.log
+          if-no-files-found: ignore
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4

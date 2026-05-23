@@ -74,7 +74,7 @@ fn capture_macos() -> Result<CapturedScreen, ScreenshotError> {
 #[cfg(not(target_os = "macos"))]
 fn capture_via_screenshots() -> Result<CapturedScreen, ScreenshotError> {
     use image::codecs::jpeg::JpegEncoder;
-    use image::ColorType;
+    use image::{ColorType, DynamicImage};
     use screenshots::Screen;
 
     let screens = Screen::all().map_err(|e| ScreenshotError::Capture(e.to_string()))?;
@@ -89,11 +89,12 @@ fn capture_via_screenshots() -> Result<CapturedScreen, ScreenshotError> {
 
     let width = rgba.width();
     let height = rgba.height();
+    let rgb = DynamicImage::ImageRgba8(rgba).into_rgb8();
 
     let mut jpeg_bytes: Vec<u8> = Vec::new();
     let mut encoder = JpegEncoder::new_with_quality(&mut jpeg_bytes, 82);
     encoder
-        .encode(rgba.as_raw(), width, height, ColorType::Rgba8)
+        .encode(rgb.as_raw(), width, height, ColorType::Rgb8)
         .map_err(|e| ScreenshotError::Encode(e.to_string()))?;
 
     Ok(CapturedScreen {

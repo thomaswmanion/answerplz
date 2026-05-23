@@ -11,8 +11,7 @@ Installers are on **[GitHub Releases](https://github.com/thomaswmanion/answerplz
 | Your system | File to download |
 |-------------|------------------|
 | Windows 64-bit | `answerplz_*_x64-setup.exe` |
-| Mac (M1 / M2 / M3 / M4) | `answerplz_*_aarch64.dmg` |
-| Mac (Intel) | `answerplz_*_x64.dmg` |
+| Mac (Apple Silicon) | `answerplz_*_aarch64.dmg` |
 | Linux | `answerplz_*_amd64.AppImage` (or `.deb`) |
 
 No API key is bundled — configure your provider on first launch.
@@ -105,7 +104,7 @@ Pick one in setup and paste that provider’s API key. Default vision models:
 |------------|----------------------------|
 | OpenAI     | `gpt-4o-mini`              |
 | Anthropic  | `claude-3-5-haiku-latest`  |
-| Google Gemini | `gemini-2.0-flash`      |
+| Google Gemini | `gemini-2.5-flash`      |
 | OpenRouter | `openai/gpt-4o-mini`       |
 
 Use **Advanced → Model override** only if you want a different model ID.

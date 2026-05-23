@@ -43,7 +43,7 @@ export const PROVIDERS: ProviderOption[] = [
     id: "google",
     label: "Google Gemini",
     keyHint: "API key from aistudio.google.com",
-    defaultModel: "gemini-2.0-flash",
+    defaultModel: "gemini-2.5-flash",
   },
   {
     id: "openrouter",

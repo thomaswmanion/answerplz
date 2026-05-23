@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { releaseClickThrough } from "./windowTraits";
 import "./Overlay.css";
 
 type OverlayState = "idle" | "loading" | "answer" | "error";
@@ -7,6 +8,12 @@ type OverlayState = "idle" | "loading" | "answer" | "error";
 export function Overlay() {
   const [state, setState] = useState<OverlayState>("idle");
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    return () => {
+      void releaseClickThrough();
+    };
+  }, []);
 
   async function onAnswer() {
     setState("loading");
@@ -27,6 +34,7 @@ export function Overlay() {
   }
 
   async function onQuit() {
+    await releaseClickThrough();
     await invoke("quit_app");
   }
 

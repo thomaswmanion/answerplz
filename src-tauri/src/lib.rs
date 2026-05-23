@@ -4,8 +4,13 @@ mod screenshot;
 
 use config::{config_summary, has_config, save_config, AppConfig, ConfigSummary};
 use screenshot::capture_primary_screen;
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, Manager, RunEvent, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    WindowEvent,
+};
 use tokio::sync::Mutex;
+
+const DWM_SETTLE_MS: u64 = 50;
 
 struct AppState {
     answering: Mutex<bool>,
@@ -14,6 +19,35 @@ struct AppState {
 #[derive(serde::Serialize)]
 struct AnswerResponse {
     answer: String,
+}
+
+/// Strip compositor hooks so Windows DWM releases the transparent overlay region.
+macro_rules! release_compositor_hooks {
+    ($window:expr) => {{
+        let _ = $window.set_ignore_cursor_events(false);
+        let _ = $window.set_always_on_top(false);
+    }};
+}
+
+fn compositor_settle() {
+    #[cfg(windows)]
+    std::thread::sleep(std::time::Duration::from_millis(DWM_SETTLE_MS));
+}
+
+fn release_all_windows(app: &AppHandle) {
+    for label in ["overlay", "setup", "main"] {
+        if let Some(window) = app.get_webview_window(label) {
+            release_compositor_hooks!(window);
+            let _ = window.hide();
+        }
+    }
+    compositor_settle();
+}
+
+fn suspend_overlay_for_capture(window: &WebviewWindow) {
+    release_compositor_hooks!(window);
+    let _ = window.hide();
+    compositor_settle();
 }
 
 #[tauri::command]
@@ -54,7 +88,7 @@ async fn capture_and_answer(
     }
 
     if let Some(overlay) = app.get_webview_window("overlay") {
-        let _ = overlay.hide();
+        suspend_overlay_for_capture(&overlay);
     }
     // Let the compositor drop the overlay before capture.
     tokio::time::sleep(std::time::Duration::from_millis(120)).await;
@@ -70,12 +104,16 @@ async fn capture_and_answer(
     .await;
 
     *state.answering.lock().await = false;
-
-    if let Some(overlay) = app.get_webview_window("overlay") {
-        let _ = overlay.show();
-    }
+    show_overlay(&app);
 
     result
+}
+
+fn show_overlay(app: &AppHandle) {
+    if let Some(overlay) = app.get_webview_window("overlay") {
+        let _ = overlay.show();
+        let _ = overlay.set_always_on_top(true);
+    }
 }
 
 #[tauri::command]
@@ -88,6 +126,8 @@ async fn open_setup_window(app: AppHandle) -> Result<(), String> {
     }
     build_setup_window(&app).map_err(|e| e.to_string())?;
     if let Some(overlay) = app.get_webview_window("overlay") {
+        release_compositor_hooks!(overlay);
+        compositor_settle();
         let _ = overlay.close();
     }
     Ok(())
@@ -95,15 +135,18 @@ async fn open_setup_window(app: AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 async fn finish_setup(app: AppHandle) -> Result<(), String> {
+    // Create and show overlay before closing setup — closing the only window exits the app.
+    build_overlay_window(&app).map_err(|e| e.to_string())?;
+    show_overlay(&app);
     if let Some(setup) = app.get_webview_window("setup") {
         let _ = setup.close();
     }
-    build_overlay_window(&app).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 async fn quit_app(app: AppHandle) {
+    release_all_windows(&app);
     app.exit(0);
 }
 
@@ -134,6 +177,7 @@ fn build_overlay_window(app: &AppHandle) -> tauri::Result<()> {
         .skip_taskbar(true)
         .resizable(true)
         .build()?;
+    show_overlay(app);
     Ok(())
 }
 
@@ -151,9 +195,19 @@ pub fn run() {
                 build_setup_window(app.handle())?;
             }
             if let Some(main) = app.get_webview_window("main") {
+                release_compositor_hooks!(main);
                 let _ = main.close();
             }
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            match event {
+                WindowEvent::CloseRequested { .. } | WindowEvent::Destroyed => {
+                    release_compositor_hooks!(window);
+                    compositor_settle();
+                }
+                _ => {}
+            }
         })
         .invoke_handler(tauri::generate_handler![
             get_config_summary,
@@ -164,6 +218,11 @@ pub fn run() {
             finish_setup,
             quit_app,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|app_handle, event| {
+            if let RunEvent::ExitRequested { .. } = event {
+                release_all_windows(app_handle);
+            }
+        });
 }

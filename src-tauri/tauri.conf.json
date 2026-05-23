@@ -10,6 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -29,6 +30,8 @@
     "active": true,
     "targets": "all",
     "macOS": {
+      "entitlements": "Entitlements.plist",
+      "signingIdentity": "-",
       "infoPlist": "Info.plist"
     },
     "icon": [

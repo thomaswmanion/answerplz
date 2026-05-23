@@ -1,5 +1,5 @@
 # Fast CI on every push — same build steps as release, no upload.
-# Local: ./scripts/docker-linux-build.sh (Docker) mirrors the Linux job.
+# Local Linux: ./scripts/docker-linux-build.sh
 
 name: Build
 
@@ -67,6 +67,9 @@ jobs:
 
   macos-arm64:
     runs-on: macos-latest
+    env:
+      CI: true
+      APPLE_SIGNING_IDENTITY: "-"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -74,9 +77,13 @@ jobs:
           node-version: lts/*
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
-      - uses: swatinem/rust-cache@v2
-        with:
-          workspaces: ./src-tauri -> target
-          key: macos-arm64
+      # Do NOT use rust-cache on macOS — it caused intermittent compile failures.
       - run: npm ci
-      - run: npm run tauri -- build
+      - name: Build Tauri (macOS)
+        run: npm run tauri -- build 2>&1 | tee tauri-macos-build.log
+      - name: Upload log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-log
+          path: tauri-macos-build.log
