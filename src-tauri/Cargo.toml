@@ -21,6 +21,6 @@ genai = "0.5"
 base64 = "0.22"
 dirs = "6"
 thiserror = "2"
-xcap = "0.9"
-image = { version = "0.25", default-features = false, features = ["jpeg"] }
+screenshots = "0.8.10"
+image = { version = "0.24", default-features = false, features = ["jpeg"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }

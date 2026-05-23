@@ -17,9 +17,10 @@ Installers are on **[GitHub Releases](https://github.com/thomaswmanion/answerplz
 
 No API key is bundled — configure your provider on first launch.
 
-### Releases
+### CI and releases
 
-The [Release workflow](.github/workflows/release.yml) builds Windows, Linux, and macOS installers. It runs on version tags (`v0.1.0`, etc.) or via **Actions → Release → Run workflow**. Tag names should match `version` in `src-tauri/tauri.conf.json`.
+- **Build** ([`.github/workflows/build.yml`](.github/workflows/build.yml)) runs on every push to `main` — use this for fast iteration.
+- **Release** ([`.github/workflows/release.yml`](.github/workflows/release.yml)) uploads installers when you push a version tag (`v0.1.0`, etc.) or run **Actions → Release → Run workflow**.
 
 To publish a new version: bump the version in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`, then `git tag v0.1.0 && git push origin v0.1.0`.
 
@@ -54,7 +55,14 @@ sudo apt install -y \
   libayatana-appindicator3-dev \
   librsvg2-dev \
   patchelf \
-  libpipewire-0.3-dev
+  libxcb1-dev \
+  libxcb-randr0-dev
+```
+
+**CI locally (Linux, matches GitHub Actions):** enable Docker in WSL, then:
+
+```bash
+./scripts/docker-linux-build.sh
 ```
 
 **WSL:** You also need a GUI (WSLg on Windows 11, or an X server). Check `echo $DISPLAY` — it should not be empty when you run the app.

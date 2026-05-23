@@ -1,8 +1,8 @@
 use base64::{engine::general_purpose::STANDARD, Engine};
 use image::codecs::jpeg::JpegEncoder;
-use image::ExtendedColorType;
+use image::ColorType;
+use screenshots::Screen;
 use thiserror::Error;
-use xcap::Monitor;
 
 #[derive(Debug, Error)]
 pub enum ScreenshotError {
@@ -22,16 +22,14 @@ pub struct CapturedScreen {
 
 /// Capture the primary display and return JPEG base64 for vision APIs.
 pub fn capture_primary_screen() -> Result<CapturedScreen, ScreenshotError> {
-    let monitors = Monitor::all().map_err(|e| ScreenshotError::Capture(e.to_string()))?;
-    let monitor = monitors
-        .iter()
-        .find(|m| m.is_primary().unwrap_or(false))
-        .or(monitors.first())
-        .cloned()
+    let screens = Screen::all().map_err(|e| ScreenshotError::Capture(e.to_string()))?;
+    let screen = screens
+        .into_iter()
+        .next()
         .ok_or(ScreenshotError::NoDisplays)?;
 
-    let rgba = monitor
-        .capture_image()
+    let rgba = screen
+        .capture()
         .map_err(|e| ScreenshotError::Capture(e.to_string()))?;
 
     let width = rgba.width();
@@ -44,7 +42,7 @@ pub fn capture_primary_screen() -> Result<CapturedScreen, ScreenshotError> {
             rgba.as_raw(),
             width,
             height,
-            ExtendedColorType::Rgba8,
+            ColorType::Rgba8,
         )
         .map_err(|e| ScreenshotError::Encode(e.to_string()))?;
 
