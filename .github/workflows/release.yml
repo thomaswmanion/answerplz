@@ -1,0 +1,114 @@
+# Build answerplz for Windows, Linux, and macOS (Intel + Apple Silicon)
+# and publish installers to GitHub Releases.
+#
+# Triggers:
+#   - Push a version tag: v1.2.3  (must match version in src-tauri/tauri.conf.json)
+#   - Manual: Actions → Release → Run workflow
+#
+# Repo setting: Settings → Actions → General → Workflow permissions → Read and write
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            rust_targets: aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            rust_targets: x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            args: ""
+            rust_targets: ""
+          - platform: windows-latest
+            args: ""
+            rust_targets: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libxdo-dev \
+            build-essential \
+            pkg-config \
+            libdbus-1-dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and upload to GitHub Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: answerplz v__VERSION__
+          releaseBody: |
+            ## Install
+
+            Pick the file for your system (version __VERSION__):
+
+            | OS | Download |
+            |----|----------|
+            | **Windows** (64-bit) | `answerplz_*_x64-setup.exe` (installer) or `.msi` |
+            | **macOS** (Apple Silicon M1+) | `answerplz_*_aarch64.dmg` |
+            | **macOS** (Intel) | `answerplz_*_x64.dmg` |
+            | **Linux** | `answerplz_*_amd64.AppImage` (portable) or `.deb` |
+
+            ### First run
+
+            1. Install/open the app.
+            2. Choose your AI provider and paste an API key → **Validate & save**.
+            3. Use the floating **answer plz** button on your screen.
+
+            Config is stored at `~/.answerplz/config.json` (not included in the download).
+
+            See [README](https://github.com/${{ github.repository }}/blob/main/README.md) for details.
+          releaseDraft: false
+          prerelease: false
+          uploadUpdaterSignatures: false
+          args: ${{ matrix.args }}

@@ -1,0 +1,26 @@
+[package]
+name = "answerplz"
+version = "0.1.0"
+description = "Screen overlay that screenshots and answers questions with your AI key"
+authors = ["Tom Manion"]
+edition = "2021"
+
+[lib]
+name = "answerplz_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+genai = "0.5"
+base64 = "0.22"
+dirs = "6"
+thiserror = "2"
+xcap = "0.0.14"
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }

@@ -1,0 +1,122 @@
+html.overlay-window,
+html.overlay-window body,
+html.overlay-window #root {
+  background: transparent !important;
+}
+
+.overlay-root {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.overlay-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.25rem 0.2rem 0.2rem;
+  border-radius: 999px;
+  background: rgba(15, 17, 23, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  user-select: none;
+}
+
+.overlay-bar__grip {
+  padding: 0 0.15rem;
+  font-size: 0.65rem;
+  letter-spacing: -0.15em;
+  color: #6d778a;
+  cursor: grab;
+  line-height: 1;
+}
+
+.overlay-bar__grip:active {
+  cursor: grabbing;
+}
+
+.overlay-bar__pill {
+  padding: 0.4rem 0.85rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5b8def, #7c5cff);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.overlay-bar__pill:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.overlay-bar__icon {
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #9aa3b2;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.overlay-bar__icon:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e8eaef;
+}
+
+.overlay-bar__close:hover {
+  color: #f07178;
+}
+
+.overlay-answer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  max-width: 260px;
+  padding: 0.5rem 0.55rem 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(15, 17, 23, 0.95);
+  border: 1px solid rgba(91, 141, 239, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.overlay-answer--error {
+  border-color: rgba(240, 113, 120, 0.45);
+}
+
+.overlay-answer__text {
+  margin: 0;
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #e8eaef;
+  word-break: break-word;
+}
+
+.overlay-answer__dismiss {
+  flex-shrink: 0;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #9aa3b2;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.overlay-answer__dismiss:hover {
+  color: #e8eaef;
+}
