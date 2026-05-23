@@ -59,7 +59,8 @@ jobs:
             libxdo-dev \
             build-essential \
             pkg-config \
-            libdbus-1-dev
+            libdbus-1-dev \
+            libpipewire-0.3-dev
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -110,5 +111,5 @@ jobs:
             See [README](https://github.com/${{ github.repository }}/blob/main/README.md) for details.
           releaseDraft: false
           prerelease: false
-          uploadUpdaterSignatures: false
+          includeUpdaterJson: false
           args: ${{ matrix.args }}

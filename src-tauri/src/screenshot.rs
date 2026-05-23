@@ -24,9 +24,10 @@ pub struct CapturedScreen {
 pub fn capture_primary_screen() -> Result<CapturedScreen, ScreenshotError> {
     let monitors = Monitor::all().map_err(|e| ScreenshotError::Capture(e.to_string()))?;
     let monitor = monitors
-        .into_iter()
-        .find(|m| m.is_primary())
-        .or_else(|| Monitor::all().ok()?.into_iter().next())
+        .iter()
+        .find(|m| m.is_primary().unwrap_or(false))
+        .or(monitors.first())
+        .cloned()
         .ok_or(ScreenshotError::NoDisplays)?;
 
     let rgba = monitor

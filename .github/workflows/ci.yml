@@ -35,7 +35,8 @@ jobs:
             libssl-dev \
             pkg-config \
             libdbus-1-dev \
-            build-essential
+            build-essential \
+            libpipewire-0.3-dev
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
         with:

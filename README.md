@@ -53,7 +53,8 @@ sudo apt install -y \
   libssl-dev \
   libayatana-appindicator3-dev \
   librsvg2-dev \
-  patchelf
+  patchelf \
+  libpipewire-0.3-dev
 ```
 
 **WSL:** You also need a GUI (WSLg on Windows 11, or an X server). Check `echo $DISPLAY` — it should not be empty when you run the app.
