@@ -35,8 +35,8 @@ jobs:
             artifact: windows-x64
           - name: macos-arm64
             runner: macos-latest
-            args: --target aarch64-apple-darwin
-            rust_targets: aarch64-apple-darwin
+            args: ""
+            rust_targets: ""
             artifact: macos-aarch64
           - name: macos-x64
             runner: macos-latest
@@ -83,7 +83,7 @@ jobs:
       - run: npm ci
 
       - name: Build Tauri bundles
-        run: npm run tauri -- build -- ${{ matrix.args }}
+        run: npm run tauri -- build ${{ matrix.args }}
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
