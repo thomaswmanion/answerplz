@@ -6,7 +6,7 @@ Built with [Tauri 2](https://tauri.app/) (Rust) and React (TypeScript).
 
 ## Download
 
-Pre-built installers are published on **[GitHub Releases](https://github.com/thomaswmanion/answerplz/releases)** (built automatically for Windows, Linux, and macOS).
+Installers are on **[GitHub Releases](https://github.com/thomaswmanion/answerplz/releases)**.
 
 | Your system | File to download |
 |-------------|------------------|
@@ -17,15 +17,13 @@ Pre-built installers are published on **[GitHub Releases](https://github.com/tho
 
 No API key is bundled — configure your provider on first launch.
 
-### Cutting a new release (maintainers)
+### Releases
 
-1. Bump `version` in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml` so they match.
-2. Commit, then tag and push: `git tag v0.1.0 && git push origin v0.1.0`
-3. The [Release workflow](.github/workflows/release.yml) builds all platforms and attaches installers to that release.
+The [Release workflow](.github/workflows/release.yml) builds Windows, Linux, and macOS installers. It runs on version tags (`v0.1.0`, etc.) or via **Actions → Release → Run workflow**. Tag names should match `version` in `src-tauri/tauri.conf.json`.
 
-You can also run **Actions → Release → Run workflow** manually (uses the version from `tauri.conf.json`).
+To publish a new version: bump the version in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`, then `git tag v0.1.0 && git push origin v0.1.0`.
 
-**Repo setting:** Settings → Actions → General → **Workflow permissions** → *Read and write permissions* (required for uploading release assets).
+Repo setting for uploads: **Settings → Actions → General → Workflow permissions → Read and write permissions**.
 
 ## Features
 
