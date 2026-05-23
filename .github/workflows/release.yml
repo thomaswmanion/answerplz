@@ -28,16 +28,19 @@ jobs:
             args: ""
             rust_targets: ""
             artifact: linux-x64
+            bundles: appimage,deb,rpm
           - name: windows
             runner: windows-latest
             args: ""
             rust_targets: ""
             artifact: windows-x64
+            bundles: msi,nsis
           - name: macos-arm64
             runner: macos-latest
             args: ""
             rust_targets: ""
             artifact: macos-aarch64
+            bundles: dmg,app
 
     runs-on: ${{ matrix.runner }}
 
@@ -83,7 +86,7 @@ jobs:
         env:
           CI: true
           APPLE_SIGNING_IDENTITY: "-"
-        run: npm run tauri -- build ${{ matrix.args }} 2>&1 | tee tauri-build.log
+        run: npm run tauri -- build ${{ matrix.args }} --bundles ${{ matrix.bundles }} 2>&1 | tee tauri-build.log
 
       - name: Upload build log on failure
         if: failure()
@@ -93,37 +96,9 @@ jobs:
           path: tauri-build.log
           if-no-files-found: ignore
 
-      # Only top-level installers — not AppImage internals, .app bundles, or build scripts.
       - name: Collect installers
         shell: bash
-        run: |
-          mkdir -p release-installers
-          shopt -s nullglob
-          for pattern in \
-            src-tauri/target/*/release/bundle/dmg/*.dmg \
-            src-tauri/target/release/bundle/dmg/*.dmg \
-            src-tauri/target/*/release/bundle/msi/*.msi \
-            src-tauri/target/release/bundle/msi/*.msi \
-            src-tauri/target/*/release/bundle/nsis/*-setup.exe \
-            src-tauri/target/release/bundle/nsis/*-setup.exe \
-            src-tauri/target/*/release/bundle/deb/*.deb \
-            src-tauri/target/release/bundle/deb/*.deb \
-            src-tauri/target/*/release/bundle/appimage/*.AppImage \
-            src-tauri/target/release/bundle/appimage/*.AppImage \
-            src-tauri/target/*/release/bundle/rpm/*.rpm \
-            src-tauri/target/release/bundle/rpm/*.rpm
-          do
-            for f in $pattern; do
-              cp "$f" "release-installers/$(basename "$f")"
-            done
-          done
-          if [ -z "$(ls -A release-installers)" ]; then
-            echo "::error::No installer files found under src-tauri/target/.../bundle/"
-            find src-tauri/target -type d -name bundle 2>/dev/null | head -5
-            find src-tauri/target -path '*/bundle/*' -maxdepth 3 -type f 2>/dev/null | head -40
-            exit 1
-          fi
-          ls -la release-installers/
+        run: bash scripts/collect-installers.sh
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
@@ -164,7 +139,8 @@ jobs:
             -name '*.deb' -o \
             -name '*.rpm' -o \
             -name '*.AppImage' -o \
-            -name '*-setup.exe' \
+            -name '*-setup.exe' -o \
+            -name '*.app.zip' \
           \) -exec cp -n {} release-installers/ \;
           ls -la release-installers/
           count=$(ls -1 release-installers | wc -l)
