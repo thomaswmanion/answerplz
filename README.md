@@ -31,7 +31,9 @@ Repo setting for uploads: **Settings → Actions → General → Workflow permis
 - **Unified AI client** — [genai](https://github.com/jeremychone/rust-genai) handles provider APIs (similar idea to the Vercel AI SDK)
 - **Quick validation** — checks your key before saving to `~/.answerplz/config.json`
 - **Floating overlay** — always-on-top, draggable chip with **answer plz**, settings, and quit
-- **Screenshot → vision model** — captures the primary display and asks for the shortest possible answer
+- **Screenshot → vision model** — captures your chosen display (primary, a specific monitor, or all combined) and asks for the shortest possible answer
+- **Type a question** — click **?**, ask anything, get a brief reply (no screenshot)
+- **Clipboard answer** — click **⎘** to answer from whatever text you copied
 
 ## Prerequisites
 

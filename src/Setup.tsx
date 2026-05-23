@@ -1,7 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { AppConfig, Provider, ValidationResult } from "./types";
-import { getProviderOption, PROVIDERS } from "./types";
+import type {
+  AppConfig,
+  CaptureMonitor,
+  ConfigSummary,
+  MonitorInfo,
+  Provider,
+  ValidationResult,
+} from "./types";
+import {
+  captureMonitorFromSelectValue,
+  captureMonitorToSelectValue,
+  getProviderOption,
+  PROVIDERS,
+} from "./types";
 import "./Setup.css";
 
 export function Setup() {
@@ -9,10 +21,31 @@ export function Setup() {
   const [apiKey, setApiKey] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [model, setModel] = useState("");
+  const [captureSelect, setCaptureSelect] = useState("primary");
+  const [monitors, setMonitors] = useState<MonitorInfo[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const selected = getProviderOption(provider);
+
+  useEffect(() => {
+  async function loadSetup() {
+      try {
+        const [summary, displayList] = await Promise.all([
+          invoke<ConfigSummary>("get_config_summary"),
+          invoke<MonitorInfo[]>("list_displays"),
+        ]);
+        setMonitors(displayList);
+        if (summary.configured) {
+          setProvider(summary.provider);
+          setCaptureSelect(captureMonitorToSelectValue(summary.capture_monitor));
+        }
+      } catch (err) {
+        setStatus(String(err));
+      }
+    }
+    void loadSetup();
+  }, []);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
@@ -23,10 +56,13 @@ export function Setup() {
     setBusy(true);
     setStatus("Validating…");
     try {
+      const capture_monitor: CaptureMonitor =
+        captureMonitorFromSelectValue(captureSelect);
       const config: AppConfig = {
         provider,
         api_key: apiKey.trim(),
         model: model.trim() || undefined,
+        capture_monitor,
       };
       const result = await invoke<ValidationResult>("validate_and_save_config", {
         config,
@@ -43,6 +79,15 @@ export function Setup() {
       setBusy(false);
     }
   }
+
+  const captureOptions: { value: string; label: string }[] = [
+    { value: "primary", label: "Primary display" },
+    { value: "all", label: "All displays (combined)" },
+    ...monitors.map((m) => ({
+      value: String(m.index),
+      label: m.label,
+    })),
+  ];
 
   return (
     <div className="setup">
@@ -80,9 +125,23 @@ export function Setup() {
           />
         </label>
 
+        <label className="setup__label">
+          Screenshot target
+          <select
+            value={captureSelect}
+            onChange={(e) => setCaptureSelect(e.target.value)}
+          >
+            {captureOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <p className="setup__hint">
-          Uses <strong>{selected.defaultModel}</strong> by default (vision). No
-          account setup beyond your provider&apos;s key.
+          Uses <strong>{selected.defaultModel}</strong> by default (vision). Choose
+          which display to capture when you click <strong>answer plz</strong>.
         </p>
 
         <button

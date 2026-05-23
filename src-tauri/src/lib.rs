@@ -3,7 +3,7 @@ mod config;
 mod screenshot;
 
 use config::{config_summary, has_config, save_config, AppConfig, ConfigSummary};
-use screenshot::capture_primary_screen;
+use screenshot::{capture_for_target, list_monitors, MonitorInfo};
 use tauri::{
     AppHandle, Manager, RunEvent, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
     WindowEvent,
@@ -56,6 +56,11 @@ fn get_config_summary() -> ConfigSummary {
 }
 
 #[tauri::command]
+fn list_displays() -> Result<Vec<MonitorInfo>, String> {
+    list_monitors().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn is_configured() -> bool {
     has_config()
 }
@@ -71,6 +76,55 @@ async fn validate_and_save_config(config: AppConfig) -> ai::ValidationResult {
             };
         }
     }
+    result
+}
+
+fn read_clipboard_text() -> Result<String, String> {
+    arboard::Clipboard::new()
+        .and_then(|mut clipboard| clipboard.get_text())
+        .map_err(|e| format!("Could not read clipboard: {e}"))
+}
+
+async fn try_begin_answering(state: &State<'_, AppState>) -> Result<(), String> {
+    let mut guard = state.answering.lock().await;
+    if *guard {
+        return Err("Already processing a request.".into());
+    }
+    *guard = true;
+    Ok(())
+}
+
+#[tauri::command]
+async fn answer_question(
+    state: State<'_, AppState>,
+    question: String,
+) -> Result<AnswerResponse, String> {
+    try_begin_answering(&state).await?;
+    let result = async {
+        let config = config::load_config().map_err(|e| e.to_string())?;
+        let answer = ai::answer_question(&config, &question)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(AnswerResponse { answer })
+    }
+    .await;
+    *state.answering.lock().await = false;
+    result
+}
+
+#[tauri::command]
+async fn answer_from_clipboard(state: State<'_, AppState>) -> Result<AnswerResponse, String> {
+    try_begin_answering(&state).await?;
+    let result = async {
+        let config = config::load_config().map_err(|e| e.to_string())?;
+        let clipboard_text = read_clipboard_text()?;
+        let answer = ai::answer_from_clipboard_text(&config, &clipboard_text)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(AnswerResponse { answer })
+    }
+    .await;
+    *state.answering.lock().await = false;
     result
 }
 
@@ -95,7 +149,7 @@ async fn capture_and_answer(
 
     let result = async {
         let config = config::load_config().map_err(|e| e.to_string())?;
-        let captured = capture_primary_screen().map_err(|e| e.to_string())?;
+        let captured = capture_for_target(&config.capture_monitor).map_err(|e| e.to_string())?;
         let answer = ai::answer_from_screenshot(&config, &captured.jpeg_base64)
             .await
             .map_err(|e| e.to_string())?;
@@ -156,7 +210,7 @@ fn build_setup_window(app: &AppHandle) -> tauri::Result<()> {
     }
     WebviewWindowBuilder::new(app, "setup", WebviewUrl::default())
         .title("answerplz — setup")
-        .inner_size(440.0, 520.0)
+        .inner_size(440.0, 580.0)
         .resizable(false)
         .center()
         .build()?;
@@ -169,8 +223,8 @@ fn build_overlay_window(app: &AppHandle) -> tauri::Result<()> {
     }
     WebviewWindowBuilder::new(app, "overlay", WebviewUrl::default())
         .title("answerplz")
-        .inner_size(280.0, 120.0)
-        .min_inner_size(200.0, 80.0)
+        .inner_size(420.0, 160.0)
+        .min_inner_size(280.0, 80.0)
         .decorations(false)
         .transparent(true)
         .always_on_top(true)
@@ -211,8 +265,11 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_config_summary,
+            list_displays,
             is_configured,
             validate_and_save_config,
+            answer_question,
+            answer_from_clipboard,
             capture_and_answer,
             open_setup_window,
             finish_setup,

@@ -23,6 +23,20 @@ impl Provider {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "mode", rename_all = "snake_case")]
+pub enum CaptureMonitor {
+    Primary,
+    All,
+    Monitor { index: usize },
+}
+
+impl Default for CaptureMonitor {
+    fn default() -> Self {
+        Self::Primary
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub provider: Provider,
@@ -31,6 +45,8 @@ pub struct AppConfig {
     pub model: Option<String>,
     #[serde(default)]
     pub base_url: Option<String>,
+    #[serde(default)]
+    pub capture_monitor: CaptureMonitor,
 }
 
 impl AppConfig {
@@ -100,6 +116,7 @@ pub struct ConfigSummary {
     pub provider: Provider,
     pub model: String,
     pub configured: bool,
+    pub capture_monitor: CaptureMonitor,
 }
 
 pub fn config_summary() -> ConfigSummary {
@@ -108,11 +125,13 @@ pub fn config_summary() -> ConfigSummary {
             provider: c.provider.clone(),
             model: c.model(),
             configured: true,
+            capture_monitor: c.capture_monitor.clone(),
         },
         Err(_) => ConfigSummary {
             provider: Provider::Openai,
             model: Provider::Openai.default_model().to_string(),
             configured: false,
+            capture_monitor: CaptureMonitor::default(),
         },
     }
 }

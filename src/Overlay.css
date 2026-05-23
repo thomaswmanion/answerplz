@@ -78,6 +78,80 @@ html.overlay-window #root {
   color: #f07178;
 }
 
+.overlay-bar__action {
+  font-size: 0.95rem;
+}
+
+.overlay-bar__action:hover {
+  color: #c8d4ff;
+}
+
+.overlay-ask {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 360px;
+  padding: 0.45rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(15, 17, 23, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.overlay-ask__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #e8eaef;
+  font-size: 0.85rem;
+}
+
+.overlay-ask__input:focus {
+  outline: none;
+  border-color: rgba(91, 141, 239, 0.65);
+}
+
+.overlay-ask__input::placeholder {
+  color: #6d778a;
+}
+
+.overlay-ask__submit {
+  padding: 0.45rem 0.7rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #5b8def, #7c5cff);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.overlay-ask__submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.overlay-ask__cancel {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa3b2;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.overlay-ask__cancel:hover {
+  color: #e8eaef;
+}
+
 .overlay-answer {
   display: flex;
   align-items: flex-start;

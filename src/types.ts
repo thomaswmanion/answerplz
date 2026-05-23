@@ -1,16 +1,34 @@
 export type Provider = "openai" | "anthropic" | "google" | "openrouter";
 
+export type CaptureMonitor =
+  | { mode: "primary" }
+  | { mode: "all" }
+  | { mode: "monitor"; index: number };
+
 export interface AppConfig {
   provider: Provider;
   api_key: string;
   model?: string;
   base_url?: string;
+  capture_monitor?: CaptureMonitor;
 }
 
 export interface ConfigSummary {
   provider: Provider;
   model: string;
   configured: boolean;
+  capture_monitor: CaptureMonitor;
+}
+
+export interface MonitorInfo {
+  index: number;
+  id: number;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  is_primary: boolean;
+  label: string;
 }
 
 export interface ValidationResult {
@@ -56,3 +74,17 @@ export const PROVIDERS: ProviderOption[] = [
 export function getProviderOption(id: Provider): ProviderOption {
   return PROVIDERS.find((p) => p.id === id) ?? PROVIDERS[0];
 }
+
+export function captureMonitorToSelectValue(target: CaptureMonitor): string {
+  if (target.mode === "primary") return "primary";
+  if (target.mode === "all") return "all";
+  return String(target.index);
+}
+
+export function captureMonitorFromSelectValue(value: string): CaptureMonitor {
+  if (value === "primary") return { mode: "primary" };
+  if (value === "all") return { mode: "all" };
+  return { mode: "monitor", index: Number.parseInt(value, 10) };
+}
+
+export const DEFAULT_CAPTURE_MONITOR: CaptureMonitor = { mode: "primary" };

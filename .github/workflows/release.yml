@@ -93,12 +93,43 @@ jobs:
           path: tauri-build.log
           if-no-files-found: ignore
 
-      - name: Upload bundle artifact
+      # Only top-level installers — not AppImage internals, .app bundles, or build scripts.
+      - name: Collect installers
+        shell: bash
+        run: |
+          mkdir -p release-installers
+          shopt -s nullglob
+          for pattern in \
+            src-tauri/target/*/release/bundle/dmg/*.dmg \
+            src-tauri/target/release/bundle/dmg/*.dmg \
+            src-tauri/target/*/release/bundle/msi/*.msi \
+            src-tauri/target/release/bundle/msi/*.msi \
+            src-tauri/target/*/release/bundle/nsis/*-setup.exe \
+            src-tauri/target/release/bundle/nsis/*-setup.exe \
+            src-tauri/target/*/release/bundle/deb/*.deb \
+            src-tauri/target/release/bundle/deb/*.deb \
+            src-tauri/target/*/release/bundle/appimage/*.AppImage \
+            src-tauri/target/release/bundle/appimage/*.AppImage \
+            src-tauri/target/*/release/bundle/rpm/*.rpm \
+            src-tauri/target/release/bundle/rpm/*.rpm
+          do
+            for f in $pattern; do
+              cp "$f" "release-installers/$(basename "$f")"
+            done
+          done
+          if [ -z "$(ls -A release-installers)" ]; then
+            echo "::error::No installer files found under src-tauri/target/.../bundle/"
+            find src-tauri/target -type d -name bundle 2>/dev/null | head -5
+            find src-tauri/target -path '*/bundle/*' -maxdepth 3 -type f 2>/dev/null | head -40
+            exit 1
+          fi
+          ls -la release-installers/
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            src-tauri/target/**/release/bundle/**/*
+          path: release-installers/*
           if-no-files-found: error
 
   release:
@@ -118,11 +149,29 @@ jobs:
             echo "name=v$(jq -r .version src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Download all bundles
+      - name: Download all installers
         uses: actions/download-artifact@v4
         with:
           path: bundles
           merge-multiple: true
+
+      - name: Flatten release assets
+        run: |
+          mkdir -p release-installers
+          find bundles -type f \( \
+            -name '*.dmg' -o \
+            -name '*.msi' -o \
+            -name '*.deb' -o \
+            -name '*.rpm' -o \
+            -name '*.AppImage' -o \
+            -name '*-setup.exe' \
+          \) -exec cp -n {} release-installers/ \;
+          ls -la release-installers/
+          count=$(ls -1 release-installers | wc -l)
+          if [ "$count" -lt 3 ]; then
+            echo "::error::Expected installers from linux, windows, and macOS (got $count files)"
+            exit 1
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -130,5 +179,6 @@ jobs:
           tag_name: ${{ steps.tag.outputs.name }}
           name: answerplz ${{ steps.tag.outputs.name }}
           generate_release_notes: true
-          files: bundles/**/*
+          files: release-installers/*
+          overwrite_files: true
           fail_on_unmatched_files: true
