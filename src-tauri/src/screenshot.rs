@@ -92,7 +92,7 @@ fn capture_monitor(index: usize) -> Result<CapturedScreen, ScreenshotError> {
 
     #[cfg(target_os = "macos")]
     {
-        return capture_macos_display(monitor.id);
+        return capture_macos_display(Some(monitor.id));
     }
 
     #[cfg(not(target_os = "macos"))]
