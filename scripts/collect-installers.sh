@@ -15,6 +15,10 @@ copy_installer() {
   cp "$f" "$OUT/$(basename "$f")"
 }
 
+find_macos_app() {
+  find "$TARGET" -type d -name '*.app' -path '*/bundle/macos/*' 2>/dev/null | head -1 || true
+}
+
 # Top-level bundle outputs only (not nested AppImage payloads).
 while IFS= read -r -d '' f; do
   case "$f" in
@@ -37,7 +41,7 @@ done < <(
 shopt -s nullglob
 dmgs=("$OUT"/*.dmg)
 if ((${#dmgs[@]} == 0)) && [[ "$(uname -s)" == "Darwin" ]]; then
-  app_path="$(find "$TARGET" -type d -path '*/release/bundle/macos/*.app' 2>/dev/null | head -1 || true)"
+  app_path="$(find_macos_app)"
   if [[ -n "$app_path" ]]; then
     zip_name="$(basename "$app_path").zip"
     echo "No .dmg found; zipping $app_path -> $zip_name"
@@ -48,7 +52,11 @@ fi
 if [[ -z "$(ls -A "$OUT" 2>/dev/null)" ]]; then
   echo "::error::No installer files found under $TARGET/.../bundle/"
   find "$TARGET" -type d -name bundle 2>/dev/null | head -10 || true
-  find "$TARGET" -path '*/bundle/*' -maxdepth 4 \( -type f -o -type d \) 2>/dev/null | head -60 || true
+  find "$TARGET" -path '*/bundle/*' -maxdepth 5 \( -type f -o -type d \) 2>/dev/null | head -80 || true
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    echo "macOS .app search:"
+    find_macos_app || true
+  fi
   exit 1
 fi
 

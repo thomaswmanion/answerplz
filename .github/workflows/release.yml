@@ -37,10 +37,10 @@ jobs:
             bundles: msi,nsis
           - name: macos-arm64
             runner: macos-latest
-            args: ""
-            rust_targets: ""
+            args: --target aarch64-apple-darwin
+            rust_targets: aarch64-apple-darwin
             artifact: macos-aarch64
-            bundles: dmg,app
+            bundles: ""
 
     runs-on: ${{ matrix.runner }}
 
@@ -83,10 +83,17 @@ jobs:
       - run: npm ci
 
       - name: Build Tauri bundles
+        shell: bash
         env:
           CI: true
           APPLE_SIGNING_IDENTITY: "-"
-        run: npm run tauri -- build ${{ matrix.args }} --bundles ${{ matrix.bundles }} 2>&1 | tee tauri-build.log
+        run: |
+          set -o pipefail
+          build_args=(build ${{ matrix.args }})
+          if [[ -n "${{ matrix.bundles }}" ]]; then
+            build_args+=(--bundles "${{ matrix.bundles }}")
+          fi
+          npm run tauri -- "${build_args[@]}" 2>&1 | tee tauri-build.log
 
       - name: Upload build log on failure
         if: failure()
@@ -99,6 +106,7 @@ jobs:
       - name: Collect installers
         shell: bash
         run: bash scripts/collect-installers.sh
+
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
