@@ -12,6 +12,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  VITE_APP_VERSION: ${{ github.ref_name }}
 
 jobs:
   linux:

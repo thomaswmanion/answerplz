@@ -47,6 +47,9 @@ pub struct AppConfig {
     pub base_url: Option<String>,
     #[serde(default)]
     pub capture_monitor: CaptureMonitor,
+    /// Global shortcut, e.g. `Ctrl+Shift+A`. Uses [`crate::hotkey::DEFAULT_HOTKEY`] when unset.
+    #[serde(default)]
+    pub hotkey: Option<String>,
 }
 
 impl AppConfig {
@@ -118,6 +121,7 @@ pub struct SaveConfigRequest {
     pub base_url: Option<String>,
     pub capture_monitor: CaptureMonitor,
     pub api_key: Option<String>,
+    pub hotkey: Option<String>,
 }
 
 /// Public view without API key (for UI display).
@@ -129,6 +133,7 @@ pub struct ConfigSummary {
     pub model_override: Option<String>,
     pub configured: bool,
     pub capture_monitor: CaptureMonitor,
+    pub hotkey: String,
 }
 
 pub fn config_summary() -> ConfigSummary {
@@ -139,6 +144,7 @@ pub fn config_summary() -> ConfigSummary {
             model_override: c.model.clone(),
             configured: true,
             capture_monitor: c.capture_monitor.clone(),
+            hotkey: crate::hotkey::hotkey_string(&c),
         },
         Err(_) => ConfigSummary {
             provider: Provider::Openai,
@@ -146,6 +152,7 @@ pub fn config_summary() -> ConfigSummary {
             model_override: None,
             configured: false,
             capture_monitor: CaptureMonitor::default(),
+            hotkey: crate::hotkey::DEFAULT_HOTKEY.to_string(),
         },
     }
 }

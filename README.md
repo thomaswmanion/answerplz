@@ -4,7 +4,7 @@
   <img src="logo.png" alt="answerplz logo" width="180">
 </p>
 
-A small desktop overlay that sits on your screen, takes a screenshot when you click **answer plz**, and returns a **brief** answer from the question visible on screen — using **your own** AI API key.
+A small desktop overlay that sits on your screen, takes a screenshot when you click **answer plz** (or press your global hotkey), and returns a **brief** answer from the question visible on screen — using **your own** AI API key.
 
 Built with [Tauri 2](https://tauri.app/) (Rust) and React (TypeScript).
 
@@ -20,26 +20,59 @@ Installers are on **[GitHub Releases](https://github.com/thomaswmanion/answerplz
 
 No API key is bundled — configure your provider on first launch.
 
-### CI and releases
-
-- **Build** ([`.github/workflows/build.yml`](.github/workflows/build.yml)) runs on every push to `main` — use this for fast iteration.
-- **Release** ([`.github/workflows/release.yml`](.github/workflows/release.yml)) uploads installers when you push a version tag (`v0.1.0`, etc.) or run **Actions → Release → Run workflow**.
-
-To publish a new version: bump the version in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`, then `git tag v0.1.0 && git push origin v0.1.0`.
-
-Repo setting for uploads: **Settings → Actions → General → Workflow permissions → Read and write permissions**.
-
 ## Features
 
 - **Bring your own key** — OpenAI, Anthropic, Google Gemini, or OpenRouter (one dropdown + API key)
-- **Unified AI client** — [genai](https://github.com/jeremychone/rust-genai) handles provider APIs (similar idea to the Vercel AI SDK)
-- **Quick validation** — checks your key before saving to `~/.answerplz/config.json`
-- **Floating overlay** — always-on-top, draggable chip with **answer plz**, settings, and quit
+- **Floating overlay** — always-on-top, draggable, resizable chip with **answer plz**, settings, and hide
+- **Global hotkey** — configurable shortcut (default `Ctrl+Shift+A`) triggers screenshot + answer from anywhere
 - **Screenshot → vision model** — captures your chosen display (primary, a specific monitor, or all combined) and asks for the shortest possible answer
 - **Type a question** — click **?**, ask anything, get a brief reply (no screenshot)
 - **Clipboard answer** — click **⎘** to answer from whatever text you copied
+- **Copy answer** — one click on the answer bubble
+- **System tray** — show/hide overlay, open settings, or quit (the overlay **×** hides; quit is from the tray)
+- **Recent answers** — last answers saved locally in settings
+- **Check for updates** — compares your version to the latest GitHub release
+- **Quick validation** — checks your key before saving to `~/.answerplz/config.json`
 
-## Prerequisites
+## Usage
+
+1. On first launch, pick a provider, paste your API key, and click **Validate & save**.
+2. The overlay appears: drag via the **⋮⋮** grip, click **answer plz** (or use your hotkey) when you want an answer.
+3. A small bubble shows the short answer; copy with **⎘** or dismiss with **×**.
+4. **⚙** reopens settings (provider, monitor, hotkey, etc.). **×** on the bar **hides** the overlay — use the **system tray** to show it again or quit.
+
+Config path: `~/.answerplz/config.json` (mode `600` on Unix). Answer history: `~/.answerplz/history.json`.
+
+### macOS permissions
+
+On first use you may need to grant **Screen Recording** (for screenshots) and **Accessibility** (for global hotkeys) in **System Settings → Privacy & Security**.
+
+## Supported providers
+
+Pick one in setup and paste that provider’s API key. Default vision models:
+
+| Provider    | Default model              |
+|------------|----------------------------|
+| OpenAI     | `gpt-4o-mini`              |
+| Anthropic  | `claude-3-5-haiku-latest`  |
+| Google Gemini | `gemini-2.5-flash`      |
+| OpenRouter | `openai/gpt-4o-mini`       |
+
+Use **Advanced → Model override** only if you want a different model ID.
+
+## Security note
+
+Your API key is stored **locally in plaintext** in your home directory, like most BYOK CLI/desktop tools. Do not share that file.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+## For contributors
+
+### Prerequisites
 
 Install [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.
 
@@ -64,12 +97,6 @@ sudo apt install -y \
   libxcb-randr0-dev
 ```
 
-**CI locally (Linux, matches GitHub Actions):** enable Docker in WSL, then:
-
-```bash
-./scripts/docker-linux-build.sh
-```
-
 **WSL:** You also need a GUI (WSLg on Windows 11, or an X server). Check `echo $DISPLAY` — it should not be empty when you run the app.
 
 **Rust:**
@@ -78,7 +105,7 @@ sudo apt install -y \
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-## Development
+### Development
 
 ```bash
 npm install
@@ -91,7 +118,7 @@ After updating `logo.png`, regenerate bundle and web icons:
 npm run icons
 ```
 
-## Build
+### Build
 
 ```bash
 npm run tauri build
@@ -99,32 +126,19 @@ npm run tauri build
 
 Installers/binaries are under `src-tauri/target/release/bundle/`.
 
-## Usage
+**CI locally (Linux, matches GitHub Actions):** enable Docker in WSL, then:
 
-1. On first launch, pick a provider, paste your API key, and click **Validate & save**.
-2. The overlay appears: drag via the **⋮⋮** grip, click **answer plz** when you want an answer.
-3. A small bubble shows the short answer; dismiss with **×**.
-4. **⚙** reopens setup (change provider/key). **×** on the bar quits the app.
+```bash
+./scripts/docker-linux-build.sh
+```
 
-Config path: `~/.answerplz/config.json` (mode `600` on Unix).
+### CI and releases
 
-## Supported providers
+- **Build** ([`.github/workflows/build.yml`](.github/workflows/build.yml)) runs on every push to `main` — use this for fast iteration.
+- **Release** ([`.github/workflows/release.yml`](.github/workflows/release.yml)) uploads installers when you push a version tag (`v0.1.0`, etc.) or run **Actions → Release → Run workflow**.
 
-Pick one in setup and paste that provider’s API key. Default vision models:
+To publish a new version: bump the version in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`, then `git tag v0.1.0 && git push origin v0.1.0`.
 
-| Provider    | Default model              |
-|------------|----------------------------|
-| OpenAI     | `gpt-4o-mini`              |
-| Anthropic  | `claude-3-5-haiku-latest`  |
-| Google Gemini | `gemini-2.5-flash`      |
-| OpenRouter | `openai/gpt-4o-mini`       |
+Repo setting for uploads: **Settings → Actions → General → Workflow permissions → Read and write permissions**.
 
-Use **Advanced → Model override** only if you want a different model ID.
-
-## Security note
-
-Your API key is stored **locally in plaintext** in your home directory, like most BYOK CLI/desktop tools. Do not share that file.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+The app uses [genai](https://github.com/jeremychone/rust-genai) for provider APIs (similar idea to the Vercel AI SDK).

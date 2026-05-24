@@ -1,8 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { resolveAppVersion } from "./scripts/resolve-app-version.mjs";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
+
+process.env.VITE_APP_VERSION ??= resolveAppVersion();
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({

@@ -200,3 +200,115 @@
   font-size: 0.85rem;
   color: #7fd99a;
 }
+
+.setup__about {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.setup__about-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6d778a;
+}
+
+.setup__about-version {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #c8d4ff;
+}
+
+.setup__history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.setup__history-clear {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #2a3142;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa3b2;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.setup__history-clear:hover {
+  color: #e8eaef;
+  border-color: #3d465c;
+}
+
+.setup__history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.setup__history-item {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: #161a24;
+  border: 1px solid #2a3142;
+}
+
+.setup__history-meta {
+  font-size: 0.7rem;
+  color: #6d778a;
+}
+
+.setup__history-preview {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b8c0d0;
+}
+
+.setup__history-answer {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #9aa3b2;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.setup__update-btn {
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #2a3142;
+  border-radius: 8px;
+  background: #161a24;
+  color: #c8d4ff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.setup__update-btn:hover:not(:disabled) {
+  border-color: #5b8def;
+}
+
+.setup__update-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.setup__update-status {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  color: #9aa3b2;
+  line-height: 1.4;
+}

@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   CaptureMonitor,
   ConfigSummary,
+  HistoryEntry,
   MonitorInfo,
   Provider,
   SaveConfigRequest,
@@ -11,10 +12,15 @@ import type {
 import {
   captureMonitorFromSelectValue,
   captureMonitorToSelectValue,
+  DEFAULT_HOTKEY,
   getProviderOption,
   PROVIDERS,
 } from "./types";
 import { MonitorPicker } from "./MonitorPicker";
+import { getAboutLabel } from "./appVersion";
+import { checkForUpdates } from "./checkForUpdates";
+import { formatHistoryDate } from "./formatHistoryDate";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import "./Setup.css";
 
 export function Setup() {
@@ -25,8 +31,12 @@ export function Setup() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [model, setModel] = useState("");
   const [captureSelect, setCaptureSelect] = useState("primary");
+  const [hotkey, setHotkey] = useState(DEFAULT_HOTKEY);
   const [monitors, setMonitors] = useState<MonitorInfo[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [status, setStatus] = useState<string | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const selected = getProviderOption(provider);
@@ -34,12 +44,15 @@ export function Setup() {
   useEffect(() => {
     async function loadSetup() {
       try {
-        const [summary, displayList] = await Promise.all([
+        const [summary, displayList, historyList] = await Promise.all([
           invoke<ConfigSummary>("get_config_summary"),
           invoke<MonitorInfo[]>("list_displays"),
+          invoke<HistoryEntry[]>("list_answer_history"),
         ]);
         setMonitors(displayList);
+        setHistory(historyList);
         setIsConfigured(summary.configured);
+        setHotkey(summary.hotkey || DEFAULT_HOTKEY);
         if (summary.configured) {
           setProvider(summary.provider);
           setCaptureSelect(captureMonitorToSelectValue(summary.capture_monitor));
@@ -78,10 +91,20 @@ export function Setup() {
     try {
       const capture_monitor: CaptureMonitor =
         captureMonitorFromSelectValue(captureSelect);
+      const trimmedHotkey = hotkey.trim() || DEFAULT_HOTKEY;
+      try {
+        await invoke<string>("validate_hotkey", { hotkey: trimmedHotkey });
+      } catch (err) {
+        setStatus(String(err));
+        setBusy(false);
+        return;
+      }
+
       const request: SaveConfigRequest = {
         provider,
         model: model.trim() || undefined,
         capture_monitor,
+        hotkey: trimmedHotkey,
         ...(trimmedKey ? { api_key: trimmedKey } : {}),
       };
       const result = await invoke<ValidationResult>("save_app_config", {
@@ -99,6 +122,31 @@ export function Setup() {
       setStatus(String(err));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onCheckUpdates() {
+    setCheckingUpdates(true);
+    setUpdateStatus(null);
+    try {
+      const result = await checkForUpdates();
+      setUpdateStatus(result.message);
+      if (result.updateAvailable) {
+        await openUrl(result.releaseUrl);
+      }
+    } catch (err) {
+      setUpdateStatus(String(err));
+    } finally {
+      setCheckingUpdates(false);
+    }
+  }
+
+  async function onClearHistory() {
+    try {
+      await invoke("clear_answer_history");
+      setHistory([]);
+    } catch (err) {
+      setStatus(String(err));
     }
   }
 
@@ -150,7 +198,25 @@ export function Setup() {
             onChange={setCaptureSelect}
           />
           <p className="setup__hint">
-            Used when you click <strong>answer plz</strong>.
+            Used when you click <strong>answer plz</strong> or press your global hotkey.
+          </p>
+        </section>
+
+        <section className="setup__section">
+          <h2 className="setup__section-title">Global hotkey</h2>
+          <label className="setup__label">
+            Shortcut
+            <input
+              type="text"
+              value={hotkey}
+              onChange={(e) => setHotkey(e.target.value)}
+              placeholder={DEFAULT_HOTKEY}
+              spellCheck={false}
+            />
+          </label>
+          <p className="setup__hint">
+            Triggers screenshot + answer from anywhere. Examples:{" "}
+            <code>Ctrl+Shift+A</code>, <code>Command+Shift+A</code> (macOS).
           </p>
         </section>
 
@@ -267,6 +333,52 @@ export function Setup() {
           </p>
         )}
       </form>
+
+      {isConfigured && (
+        <section className="setup__section setup__history">
+          <div className="setup__history-header">
+            <h2 className="setup__section-title">Recent answers</h2>
+            {history.length > 0 && (
+              <button
+                type="button"
+                className="setup__history-clear"
+                onClick={() => void onClearHistory()}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {history.length === 0 ? (
+            <p className="setup__hint">Answers from the overlay appear here.</p>
+          ) : (
+            <ul className="setup__history-list">
+              {history.slice(0, 8).map((entry, i) => (
+                <li key={`${entry.at}-${i}`} className="setup__history-item">
+                  <span className="setup__history-meta">
+                    {formatHistoryDate(entry.at)} · {entry.source}
+                  </span>
+                  <p className="setup__history-preview">{entry.preview}</p>
+                  <p className="setup__history-answer">{entry.answer}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      <footer className="setup__about">
+        <p className="setup__about-title">About</p>
+        <p className="setup__about-version">{getAboutLabel()}</p>
+        <button
+          type="button"
+          className="setup__update-btn"
+          onClick={() => void onCheckUpdates()}
+          disabled={checkingUpdates}
+        >
+          {checkingUpdates ? "Checking…" : "Check for updates"}
+        </button>
+        {updateStatus && <p className="setup__update-status">{updateStatus}</p>}
+      </footer>
     </div>
   );
 }

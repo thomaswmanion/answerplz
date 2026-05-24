@@ -11,6 +11,8 @@ export interface AppConfig {
   model?: string;
   base_url?: string;
   capture_monitor?: CaptureMonitor;
+  /** Global shortcut, e.g. Ctrl+Shift+A */
+  hotkey?: string;
 }
 
 export interface SaveConfigRequest {
@@ -20,6 +22,8 @@ export interface SaveConfigRequest {
   capture_monitor: CaptureMonitor;
   /** Omit or leave empty to keep the stored key when updating settings. */
   api_key?: string;
+  /** Global shortcut string, e.g. Ctrl+Shift+A */
+  hotkey?: string;
 }
 
 export interface ConfigSummary {
@@ -28,7 +32,17 @@ export interface ConfigSummary {
   model_override?: string;
   configured: boolean;
   capture_monitor: CaptureMonitor;
+  hotkey: string;
 }
+
+export interface HistoryEntry {
+  at: string;
+  source: string;
+  preview: string;
+  answer: string;
+}
+
+export const DEFAULT_HOTKEY = "Ctrl+Shift+A";
 
 export interface MonitorInfo {
   index: number;
