@@ -1,5 +1,9 @@
 # answerplz
 
+<p align="center">
+  <img src="logo.png" alt="answerplz logo" width="180">
+</p>
+
 A small desktop overlay that sits on your screen, takes a screenshot when you click **answer plz**, and returns a **brief** answer from the question visible on screen — using **your own** AI API key.
 
 Built with [Tauri 2](https://tauri.app/) (Rust) and React (TypeScript).
@@ -79,6 +83,12 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```bash
 npm install
 npm run tauri dev
+```
+
+After updating `logo.png`, regenerate bundle and web icons:
+
+```bash
+npm run icons
 ```
 
 ## Build

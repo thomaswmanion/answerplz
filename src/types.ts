@@ -13,9 +13,19 @@ export interface AppConfig {
   capture_monitor?: CaptureMonitor;
 }
 
+export interface SaveConfigRequest {
+  provider: Provider;
+  model?: string;
+  base_url?: string;
+  capture_monitor: CaptureMonitor;
+  /** Omit or leave empty to keep the stored key when updating settings. */
+  api_key?: string;
+}
+
 export interface ConfigSummary {
   provider: Provider;
   model: string;
+  model_override?: string;
   configured: boolean;
   capture_monitor: CaptureMonitor;
 }

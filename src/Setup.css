@@ -7,8 +7,22 @@
   color: #e8eaef;
 }
 
+.setup__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.setup__logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
 .setup__header h1 {
-  margin: 0 0 0.35rem;
+  margin: 0;
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -83,8 +97,83 @@
   color: #6d778a;
 }
 
+.setup__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #2a3142;
+  border-radius: 10px;
+  background: #12151d;
+}
+
+.setup__section-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8b95a8;
+}
+
+.setup__section--key {
+  gap: 0.65rem;
+}
+
+.setup__panel-toggle {
+  align-self: flex-start;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #3a4560;
+  border-radius: 8px;
+  background: #1a2030;
+  color: #c5cde0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.setup__panel-toggle:hover {
+  border-color: #5b8def;
+  color: #e8eaef;
+}
+
+.setup__field-note {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #7a8498;
+  line-height: 1.4;
+}
+
+.setup__actions {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.setup__cancel {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: 1px solid #3a4560;
+  border-radius: 8px;
+  background: transparent;
+  color: #b8c0d0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.setup__cancel:hover:not(:disabled) {
+  border-color: #5b8def;
+  color: #e8eaef;
+}
+
+.setup__cancel:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .setup__submit {
-  margin-top: 0.5rem;
+  flex: 1;
   padding: 0.65rem 1rem;
   border: none;
   border-radius: 8px;

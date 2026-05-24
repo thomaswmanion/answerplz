@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { DisplayPreview } from "./DisplayPreview";
 import { Overlay } from "./Overlay";
 import { Setup } from "./Setup";
 import "./Overlay.css";
@@ -17,6 +18,10 @@ function App() {
 
   if (windowLabel === "overlay") {
     return <Overlay />;
+  }
+
+  if (windowLabel.startsWith("monitor-preview-")) {
+    return <DisplayPreview windowLabel={windowLabel} />;
   }
 
   return <Setup />;

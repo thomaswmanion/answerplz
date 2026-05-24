@@ -110,11 +110,23 @@ pub fn has_config() -> bool {
         .unwrap_or(false)
 }
 
+/// Settings payload from the UI. `api_key` is optional when updating existing config.
+#[derive(Debug, Clone, Deserialize)]
+pub struct SaveConfigRequest {
+    pub provider: Provider,
+    pub model: Option<String>,
+    pub base_url: Option<String>,
+    pub capture_monitor: CaptureMonitor,
+    pub api_key: Option<String>,
+}
+
 /// Public view without API key (for UI display).
 #[derive(Debug, Clone, Serialize)]
 pub struct ConfigSummary {
     pub provider: Provider,
     pub model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_override: Option<String>,
     pub configured: bool,
     pub capture_monitor: CaptureMonitor,
 }
@@ -124,12 +136,14 @@ pub fn config_summary() -> ConfigSummary {
         Ok(c) => ConfigSummary {
             provider: c.provider.clone(),
             model: c.model(),
+            model_override: c.model.clone(),
             configured: true,
             capture_monitor: c.capture_monitor.clone(),
         },
         Err(_) => ConfigSummary {
             provider: Provider::Openai,
             model: Provider::Openai.default_model().to_string(),
+            model_override: None,
             configured: false,
             capture_monitor: CaptureMonitor::default(),
         },
