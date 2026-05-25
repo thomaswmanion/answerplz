@@ -137,7 +137,14 @@ Installers/binaries are under `src-tauri/target/release/bundle/`.
 - **Build** ([`.github/workflows/build.yml`](.github/workflows/build.yml)) runs on every push to `main` — use this for fast iteration.
 - **Release** ([`.github/workflows/release.yml`](.github/workflows/release.yml)) uploads installers when you push a version tag (`v0.1.0`, etc.) or run **Actions → Release → Run workflow**.
 
-To publish a new version: bump the version in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`, then `git tag v0.1.0 && git push origin v0.1.0`.
+To publish a new version (bumps all three version files, commits, tags, pushes, and waits for CI):
+
+```bash
+# GH_TOKEN or GITHUB_TOKEN required, or `gh auth login`
+./scripts/release.sh 0.2.6
+```
+
+Use `--dry-run` to preview, or `-y` to skip the confirmation prompt.
 
 Repo setting for uploads: **Settings → Actions → General → Workflow permissions → Read and write permissions**.
 

@@ -9,7 +9,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "icons": "cp logo.png public/logo.png && tauri icon logo.png -o src-tauri/icons"
+    "icons": "cp logo.png public/logo.png && tauri icon logo.png -o src-tauri/icons",
+    "release": "./scripts/release.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
