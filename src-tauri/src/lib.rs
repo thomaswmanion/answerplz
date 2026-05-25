@@ -120,10 +120,8 @@ fn read_clipboard_text() -> Result<String, String> {
         .map_err(|e| format!("Could not read clipboard: {e}"))
 }
 
-pub async fn run_capture_and_answer(
-    app: AppHandle,
-    state: &State<'_, AppState>,
-) -> Result<String, String> {
+pub async fn run_capture_and_answer(app: AppHandle) -> Result<String, String> {
+    let state = app.state::<AppState>();
     {
         let mut guard = state.answering.lock().await;
         if *guard {
@@ -369,11 +367,8 @@ async fn answer_from_clipboard(state: State<'_, AppState>) -> Result<AnswerRespo
 }
 
 #[tauri::command]
-async fn capture_and_answer(
-    app: AppHandle,
-    state: State<'_, AppState>,
-) -> Result<AnswerResponse, String> {
-    let answer = run_capture_and_answer(app, &state).await?;
+async fn capture_and_answer(app: AppHandle) -> Result<AnswerResponse, String> {
+    let answer = run_capture_and_answer(app).await?;
     Ok(AnswerResponse { answer })
 }
 

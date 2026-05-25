@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 use crate::config::{self, AppConfig};
@@ -45,8 +45,7 @@ pub fn register_hotkey(app: &AppHandle) -> Result<(), String> {
             }
             let app = app.clone();
             tauri::async_runtime::spawn(async move {
-                let state = app.state::<crate::AppState>();
-                let _ = crate::run_capture_and_answer(app, &state).await;
+                let _ = crate::run_capture_and_answer(app).await;
             });
         }
     })
