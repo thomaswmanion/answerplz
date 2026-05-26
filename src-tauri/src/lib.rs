@@ -3,6 +3,7 @@ mod config;
 mod display_preview;
 mod history;
 mod hotkey;
+mod platform;
 mod screenshot;
 
 use config::{
@@ -41,7 +42,7 @@ struct AnswerResponse {
 /// Strip compositor hooks so Windows DWM releases the transparent overlay region.
 macro_rules! release_compositor_hooks {
     ($window:expr) => {{
-        let _ = $window.set_ignore_cursor_events(false);
+        crate::set_ignore_cursor_events_safe!($window, false);
         let _ = $window.set_always_on_top(false);
     }};
 }
@@ -158,6 +159,13 @@ pub async fn run_capture_and_answer(app: AppHandle) -> Result<String, String> {
 }
 
 fn build_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    if !platform::system_tray_available() {
+        eprintln!(
+            "system tray unavailable (no DBus session); use the overlay bar for settings and quit"
+        );
+        return Ok(());
+    }
+
     let show_i = MenuItem::with_id(app, "tray-show", "Show overlay", true, None::<&str>)?;
     let hide_i = MenuItem::with_id(app, "tray-hide", "Hide overlay", true, None::<&str>)?;
     let settings_i = MenuItem::with_id(app, "tray-settings", "Settings…", true, None::<&str>)?;
@@ -398,14 +406,25 @@ fn hide_display_preview(app: AppHandle) {
 }
 
 #[tauri::command]
+fn display_preview_supported() -> bool {
+    display_preview::display_preview_supported()
+}
+
+#[tauri::command]
 async fn open_setup_window(app: AppHandle) -> Result<(), String> {
+    hide_display_previews(&app);
     if app.get_webview_window("setup").is_some() {
         if let Some(w) = app.get_webview_window("setup") {
+            let _ = w.set_always_on_top(true);
             let _ = w.set_focus();
         }
         return Ok(());
     }
     build_setup_window(&app).map_err(|e| e.to_string())?;
+    if let Some(setup) = app.get_webview_window("setup") {
+        let _ = setup.set_always_on_top(true);
+        let _ = setup.set_focus();
+    }
     if let Some(overlay) = app.get_webview_window("overlay") {
         release_compositor_hooks!(overlay);
         compositor_settle();
@@ -425,6 +444,7 @@ async fn close_setup_window(app: AppHandle) -> Result<(), String> {
     build_overlay_window(&app).map_err(|e| e.to_string())?;
     show_overlay(&app);
     if let Some(setup) = app.get_webview_window("setup") {
+        let _ = setup.set_always_on_top(false);
         let _ = setup.close();
     }
     if let Err(e) = register_hotkey(&app) {
@@ -498,10 +518,28 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
+            let label = window.label();
             match event {
+                WindowEvent::CloseRequested { .. } if label == "setup" => {
+                    hide_display_previews(window.app_handle());
+                    let app = window.app_handle();
+                    let _ = window.set_always_on_top(false);
+                    if app.get_webview_window("overlay").is_none() {
+                        if let Err(e) = build_overlay_window(&app) {
+                            eprintln!("failed to restore overlay after setup close: {e}");
+                        } else {
+                            show_overlay(&app);
+                        }
+                    }
+                }
                 WindowEvent::CloseRequested { .. } | WindowEvent::Destroyed => {
-                    release_compositor_hooks!(window);
-                    compositor_settle();
+                    if label.starts_with("monitor-preview-") {
+                        release_compositor_hooks!(window);
+                        compositor_settle();
+                    } else {
+                        release_compositor_hooks!(window);
+                        compositor_settle();
+                    }
                 }
                 _ => {}
             }
@@ -511,6 +549,7 @@ pub fn run() {
             list_displays,
             show_display_preview,
             hide_display_preview,
+            display_preview_supported,
             is_configured,
             validate_hotkey,
             save_app_config,

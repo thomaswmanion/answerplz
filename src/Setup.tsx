@@ -32,6 +32,7 @@ export function Setup() {
   const [model, setModel] = useState("");
   const [captureSelect, setCaptureSelect] = useState("primary");
   const [hotkey, setHotkey] = useState(DEFAULT_HOTKEY);
+  const [previewOnMonitorSupported, setPreviewOnMonitorSupported] = useState(true);
   const [monitors, setMonitors] = useState<MonitorInfo[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [status, setStatus] = useState<string | null>(null);
@@ -40,6 +41,10 @@ export function Setup() {
   const [busy, setBusy] = useState(false);
 
   const selected = getProviderOption(provider);
+
+  useEffect(() => {
+    void invoke<boolean>("display_preview_supported").then(setPreviewOnMonitorSupported);
+  }, []);
 
   useEffect(() => {
     async function loadSetup() {
@@ -72,11 +77,11 @@ export function Setup() {
   }, []);
 
   useEffect(() => {
-    if (monitors.length === 0) {
+    if (!previewOnMonitorSupported || monitors.length === 0) {
       return;
     }
     void invoke("show_display_preview", { selection: captureSelect });
-  }, [monitors, captureSelect]);
+  }, [monitors, captureSelect, previewOnMonitorSupported]);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
@@ -196,6 +201,7 @@ export function Setup() {
             monitors={monitors}
             value={captureSelect}
             onChange={setCaptureSelect}
+            previewOnMonitorSupported={previewOnMonitorSupported}
           />
           <p className="setup__hint">
             Used when you click <strong>answer plz</strong> or press your global hotkey.
