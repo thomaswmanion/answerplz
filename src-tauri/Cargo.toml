@@ -1,6 +1,6 @@
 [package]
 name = "answerplz"
-version = "0.3.2"
+version = "0.33.0"
 description = "Screen overlay that screenshots and answers questions with your AI key"
 authors = ["Tom Manion"]
 edition = "2021"
