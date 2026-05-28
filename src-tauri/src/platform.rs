@@ -1,19 +1,9 @@
-/// Linux/GTK panics if click-through is enabled before the native window exists (tao unwrap).
+/// Linux/GTK can panic if click-through is enabled before the native window is shown.
+/// Callers must `.show()` the window first (see `display_preview::create_preview_window`).
 #[macro_export]
 macro_rules! set_ignore_cursor_events_safe {
     ($window:expr, $ignore:expr) => {{
-        #[cfg(target_os = "linux")]
-        {
-            if $ignore {
-                ();
-            } else {
-                let _ = $window.set_ignore_cursor_events(false);
-            }
-        }
-        #[cfg(not(target_os = "linux"))]
-        {
-            let _ = $window.set_ignore_cursor_events($ignore);
-        }
+        let _ = $window.set_ignore_cursor_events($ignore);
     }};
 }
 

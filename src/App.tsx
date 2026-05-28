@@ -3,7 +3,6 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { DisplayPreview } from "./DisplayPreview";
 import { Overlay } from "./Overlay";
 import { Setup } from "./Setup";
-import "./Overlay.css";
 
 function App() {
   const [windowLabel, setWindowLabel] = useState<string | null>(null);

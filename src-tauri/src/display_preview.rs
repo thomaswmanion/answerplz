@@ -104,7 +104,9 @@ fn create_preview_window(app: &AppHandle, monitor: &MonitorInfo) -> Result<(), S
         .map_err(|e| e.to_string())?;
 
     let _ = window.show();
-    // Enabling click-through before show panics on Linux/GTK; macOS/Windows need it for pass-through.
+    // Enabling click-through before show panics on Linux/GTK.
+    #[cfg(target_os = "linux")]
+    std::thread::sleep(std::time::Duration::from_millis(50));
     crate::set_ignore_cursor_events_safe!(window, true);
     Ok(())
 }

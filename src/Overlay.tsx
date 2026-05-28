@@ -11,7 +11,7 @@ import { fitOverlayWindowToContent } from "./overlayWindowLayout";
 import { startOverlayResize } from "./overlayResize";
 import { useOverlayHitTest } from "./useOverlayHitTest";
 import { releaseClickThrough } from "./windowTraits";
-import "./Overlay.css";
+import "./Overlay.css"; // scoped via html.overlay-window in main.tsx
 
 type OverlayMode = "idle" | "ask" | "loading" | "answer" | "error";
 

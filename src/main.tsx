@@ -4,8 +4,12 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import App from "./App";
 import "./App.css";
 
-if (getCurrentWindow().label === "overlay") {
+const windowLabel = getCurrentWindow().label;
+if (windowLabel === "overlay") {
   document.documentElement.classList.add("overlay-window");
+}
+if (windowLabel.startsWith("monitor-preview-")) {
+  document.documentElement.classList.add("display-preview-window");
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
