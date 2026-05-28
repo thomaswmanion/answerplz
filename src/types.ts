@@ -13,6 +13,8 @@ export interface AppConfig {
   capture_monitor?: CaptureMonitor;
   /** Global shortcut, e.g. Ctrl+Shift+A */
   hotkey?: string;
+  /** Custom model instructions; uses the built-in default when unset. */
+  answer_prompt?: string;
 }
 
 export interface SaveConfigRequest {
@@ -24,6 +26,7 @@ export interface SaveConfigRequest {
   api_key?: string;
   /** Global shortcut string, e.g. Ctrl+Shift+A */
   hotkey?: string;
+  answer_prompt?: string;
 }
 
 export interface ConfigSummary {
@@ -33,6 +36,8 @@ export interface ConfigSummary {
   configured: boolean;
   capture_monitor: CaptureMonitor;
   hotkey: string;
+  answer_prompt?: string;
+  default_answer_prompt: string;
 }
 
 export interface HistoryEntry {

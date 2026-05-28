@@ -50,6 +50,9 @@ pub struct AppConfig {
     /// Global shortcut, e.g. `Ctrl+Shift+A`. Uses [`crate::hotkey::DEFAULT_HOTKEY`] when unset.
     #[serde(default)]
     pub hotkey: Option<String>,
+    /// Custom model instructions; uses [`crate::ai::DEFAULT_ANSWER_PROMPT`] when unset.
+    #[serde(default)]
+    pub answer_prompt: Option<String>,
 }
 
 impl AppConfig {
@@ -122,6 +125,7 @@ pub struct SaveConfigRequest {
     pub capture_monitor: CaptureMonitor,
     pub api_key: Option<String>,
     pub hotkey: Option<String>,
+    pub answer_prompt: Option<String>,
 }
 
 /// Public view without API key (for UI display).
@@ -134,6 +138,9 @@ pub struct ConfigSummary {
     pub configured: bool,
     pub capture_monitor: CaptureMonitor,
     pub hotkey: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub answer_prompt: Option<String>,
+    pub default_answer_prompt: String,
 }
 
 pub fn config_summary() -> ConfigSummary {
@@ -145,6 +152,8 @@ pub fn config_summary() -> ConfigSummary {
             configured: true,
             capture_monitor: c.capture_monitor.clone(),
             hotkey: crate::hotkey::hotkey_string(&c),
+            answer_prompt: c.answer_prompt.clone(),
+            default_answer_prompt: crate::ai::DEFAULT_ANSWER_PROMPT.to_string(),
         },
         Err(_) => ConfigSummary {
             provider: Provider::Openai,
@@ -153,6 +162,8 @@ pub fn config_summary() -> ConfigSummary {
             configured: false,
             capture_monitor: CaptureMonitor::default(),
             hotkey: crate::hotkey::DEFAULT_HOTKEY.to_string(),
+            answer_prompt: None,
+            default_answer_prompt: crate::ai::DEFAULT_ANSWER_PROMPT.to_string(),
         },
     }
 }

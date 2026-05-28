@@ -55,7 +55,8 @@ html:not(.overlay-window):not(.display-preview-window) body {
 }
 
 .setup__label input,
-.setup__label select {
+.setup__label select,
+.setup__textarea {
   padding: 0.55rem 0.65rem;
   border: 1px solid #2a3142;
   border-radius: 8px;
@@ -64,10 +65,52 @@ html:not(.overlay-window):not(.display-preview-window) body {
   font-size: 0.95rem;
 }
 
+.setup__textarea {
+  resize: vertical;
+  min-height: 6rem;
+  line-height: 1.45;
+  font-family: inherit;
+}
+
 .setup__label input:focus,
-.setup__label select:focus {
+.setup__label select:focus,
+.setup__textarea:focus {
   outline: 2px solid #5b8def;
   border-color: transparent;
+}
+
+.setup__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.setup__section-header .setup__section-title {
+  margin: 0;
+}
+
+.setup__reset-prompt {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #2a3142;
+  border-radius: 8px;
+  background: transparent;
+  color: #9aa3b2;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.setup__reset-prompt:hover:not(:disabled) {
+  border-color: #5b8def;
+  color: #e8eaef;
+}
+
+.setup__reset-prompt:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .setup__hint {

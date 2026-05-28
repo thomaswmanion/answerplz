@@ -77,6 +77,16 @@ fn show_overlay(app: &AppHandle) {
     }
 }
 
+/// Bring back the overlay after settings closes (show existing window or create one).
+fn restore_overlay_after_setup(app: &AppHandle) -> tauri::Result<()> {
+    if app.get_webview_window("overlay").is_some() {
+        show_overlay(app);
+        Ok(())
+    } else {
+        build_overlay_window(app)
+    }
+}
+
 fn hide_overlay_window(app: &AppHandle) {
     if let Some(overlay) = app.get_webview_window("overlay") {
         release_compositor_hooks!(overlay);
@@ -96,6 +106,10 @@ fn toggle_overlay_visibility(app: &AppHandle) {
     } else {
         show_overlay(app);
     }
+}
+
+fn emit_overlay_loading(app: &AppHandle) {
+    let _ = app.emit_to("overlay", "overlay-loading", ());
 }
 
 fn emit_overlay_answer(app: &AppHandle, answer: String, is_error: bool) {
@@ -131,24 +145,35 @@ pub async fn run_capture_and_answer(app: AppHandle) -> Result<String, String> {
         *guard = true;
     }
 
+    emit_overlay_loading(&app);
+
     if let Some(overlay) = app.get_webview_window("overlay") {
         suspend_overlay_for_capture(&overlay);
     }
     tokio::time::sleep(std::time::Duration::from_millis(120)).await;
 
-    let result: Result<String, String> = async {
+    let captured = async {
         let config = config::load_config().map_err(|e| e.to_string())?;
-        let captured = capture_for_target(&config.capture_monitor).map_err(|e| e.to_string())?;
-        let answer = ai::answer_from_screenshot(&config, &captured.jpeg_base64)
-            .await
-            .map_err(|e| e.to_string())?;
-        append_entry(AnswerSource::Screenshot, "Screenshot", &answer);
-        Ok(answer)
+        capture_for_target(&config.capture_monitor).map_err(|e| e.to_string())
     }
     .await;
 
-    *state.answering.lock().await = false;
     show_overlay(&app);
+    emit_overlay_loading(&app);
+
+    let result: Result<String, String> = match captured {
+        Ok(captured) => {
+            let config = config::load_config().map_err(|e| e.to_string())?;
+            let answer = ai::answer_from_screenshot(&config, &captured.jpeg_base64)
+                .await
+                .map_err(|e| e.to_string())?;
+            append_entry(AnswerSource::Screenshot, "Screenshot", &answer);
+            Ok(answer)
+        }
+        Err(err) => Err(err),
+    };
+
+    *state.answering.lock().await = false;
 
     match &result {
         Ok(answer) => emit_overlay_answer(&app, answer.clone(), false),
@@ -241,6 +266,15 @@ fn clear_answer_history() -> Result<(), String> {
     clear_history()
 }
 
+fn normalized_answer_prompt(raw: Option<&str>) -> Option<String> {
+    let trimmed = raw?.trim();
+    if trimmed.is_empty() || trimmed == ai::DEFAULT_ANSWER_PROMPT {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
+}
+
 #[tauri::command]
 async fn save_app_config(
     app: AppHandle,
@@ -278,6 +312,7 @@ async fn save_app_config(
                 base_url: request.base_url.clone(),
                 capture_monitor: request.capture_monitor.clone(),
                 hotkey: request.hotkey.clone(),
+                answer_prompt: normalized_answer_prompt(request.answer_prompt.as_deref()),
             }
         }
         Err(e) => {
@@ -298,6 +333,7 @@ async fn save_app_config(
     if let Some(raw) = hotkey_raw.filter(|s| !s.is_empty()) {
         config.hotkey = Some(raw.to_string());
     }
+    config.answer_prompt = normalized_answer_prompt(request.answer_prompt.as_deref());
 
     let result = if new_key.is_some() || !has_config() {
         ai::validate_config(&config).await
@@ -418,6 +454,7 @@ async fn open_setup_window(app: AppHandle) -> Result<(), String> {
             let _ = w.set_always_on_top(true);
             let _ = w.set_focus();
         }
+        hide_overlay_window(&app);
         return Ok(());
     }
     build_setup_window(&app).map_err(|e| e.to_string())?;
@@ -425,11 +462,7 @@ async fn open_setup_window(app: AppHandle) -> Result<(), String> {
         let _ = setup.set_always_on_top(true);
         let _ = setup.set_focus();
     }
-    if let Some(overlay) = app.get_webview_window("overlay") {
-        release_compositor_hooks!(overlay);
-        compositor_settle();
-        let _ = overlay.close();
-    }
+    hide_overlay_window(&app);
     Ok(())
 }
 
@@ -441,8 +474,7 @@ async fn finish_setup(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 async fn close_setup_window(app: AppHandle) -> Result<(), String> {
     hide_display_previews(&app);
-    build_overlay_window(&app).map_err(|e| e.to_string())?;
-    show_overlay(&app);
+    restore_overlay_after_setup(&app).map_err(|e| e.to_string())?;
     if let Some(setup) = app.get_webview_window("setup") {
         let _ = setup.set_always_on_top(false);
         let _ = setup.close();
@@ -524,12 +556,8 @@ pub fn run() {
                     hide_display_previews(window.app_handle());
                     let app = window.app_handle();
                     let _ = window.set_always_on_top(false);
-                    if app.get_webview_window("overlay").is_none() {
-                        if let Err(e) = build_overlay_window(&app) {
-                            eprintln!("failed to restore overlay after setup close: {e}");
-                        } else {
-                            show_overlay(&app);
-                        }
+                    if let Err(e) = restore_overlay_after_setup(&app) {
+                        eprintln!("failed to restore overlay after setup close: {e}");
                     }
                 }
                 WindowEvent::CloseRequested { .. } | WindowEvent::Destroyed => {

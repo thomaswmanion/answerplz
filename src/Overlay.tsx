@@ -11,6 +11,7 @@ import { fitOverlayWindowToContent } from "./overlayWindowLayout";
 import { startOverlayResize } from "./overlayResize";
 import { useOverlayHitTest } from "./useOverlayHitTest";
 import { releaseClickThrough } from "./windowTraits";
+import { parseConfidenceAnswer } from "./parseConfidenceAnswer";
 import "./Overlay.css"; // scoped via html.overlay-window in main.tsx
 
 type OverlayMode = "idle" | "ask" | "loading" | "answer" | "error";
@@ -49,7 +50,11 @@ export function Overlay() {
   }, [mode]);
 
   useEffect(() => {
-    const unlisten = listen<{ answer: string; isError: boolean }>(
+    const unlistenLoading = listen("overlay-loading", () => {
+      setMode("loading");
+      setText("");
+    });
+    const unlistenAnswer = listen<{ answer: string; isError: boolean }>(
       "overlay-answer",
       (event) => {
         setText(event.payload.answer);
@@ -57,7 +62,8 @@ export function Overlay() {
       },
     );
     return () => {
-      void unlisten.then((fn) => fn());
+      void unlistenLoading.then((fn) => fn());
+      void unlistenAnswer.then((fn) => fn());
     };
   }, []);
 
@@ -120,6 +126,8 @@ export function Overlay() {
     }
   }
 
+  const parsedAnswer = parseConfidenceAnswer(text);
+
   return (
     <div className="overlay-root" ref={rootRef}>
       <div className="overlay-bar">
@@ -177,6 +185,13 @@ export function Overlay() {
         </button>
       </div>
 
+      {mode === "loading" && (
+        <div className="overlay-loading" role="status" aria-live="polite">
+          <span className="overlay-loading__spinner" aria-hidden />
+          Thinking…
+        </div>
+      )}
+
       {mode === "ask" && (
         <form
           className="overlay-ask"
@@ -214,7 +229,24 @@ export function Overlay() {
           className={`overlay-answer ${mode === "error" ? "overlay-answer--error" : ""}`}
           role="status"
         >
-          <p className="overlay-answer__text">{text}</p>
+          <div className="overlay-answer__body">
+            {parsedAnswer.confidence !== null && (
+              <span
+                className={`overlay-answer__confidence overlay-answer__confidence--${
+                  parsedAnswer.confidence >= 80
+                    ? "high"
+                    : parsedAnswer.confidence >= 50
+                      ? "mid"
+                      : "low"
+                }`}
+              >
+                {parsedAnswer.confidence}%
+              </span>
+            )}
+            <p className="overlay-answer__text">
+              {parsedAnswer.confidence !== null ? parsedAnswer.answer : text}
+            </p>
+          </div>
           {mode === "answer" && (
             <button
               type="button"

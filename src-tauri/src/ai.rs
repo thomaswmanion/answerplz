@@ -6,19 +6,59 @@ use genai::{Client, ModelIden, ServiceTarget};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-const ANSWER_PROMPT: &str =
-    "Look at this screenshot. Find the question, quiz item, or problem that needs an answer. \
-     Reply with ONLY the briefest possible answer — a few words, a number, or the exact option \
-     letter/text to select. No explanation, no punctuation unless part of the answer.";
+macro_rules! answering_rules {
+    () => {
+        "\n\nWork through the problem using your knowledge and whatever is visible (text, images, \
+diagrams, choices). Reason internally before deciding — read the full question and every option.\n\
+- Apply accurate domain knowledge (science, safety, navigation, history, math, etc.); do not guess \
+when facts apply.\n\
+- Images & diagrams: base your answer on what is actually shown (colors, labels, positions, arrows).\n\
+- Ordering or procedures: use the correct real-world sequence, then give the order the question asks for.\n\
+- Multiple choice: evaluate each option and pick the single best match.\n\
+- If evidence is weak or ambiguous, still answer but use a lower confidence score.\n\
+\n\
+Output format (strict): `<confidence>%, <answer>`\n\
+- `<confidence>`: integer 0–100 — how sure you are after reasoning.\n\
+- `<answer>`: the final answer only (few words, number, letter, direction, or comma-separated order).\n\
+No explanation, labels, or extra text."
+    };
+}
 
-const CLIPBOARD_ANSWER_PROMPT: &str =
+pub const DEFAULT_ANSWER_PROMPT: &str = concat!(
+    "Look at this screenshot. Find the question, quiz item, or problem that needs an answer.",
+    answering_rules!(),
+);
+
+const CLIPBOARD_ANSWER_PROMPT: &str = concat!(
     "The following text was copied from the clipboard. Find the question, quiz item, or problem \
-     that needs an answer. Reply with ONLY the briefest possible answer — a few words, a number, \
-     or the exact option letter/text to select. No explanation unless essential.";
+     that needs an answer.",
+    answering_rules!(),
+);
 
-const BRIEF_ANSWER_INSTRUCTION: &str =
-    "Reply with ONLY the briefest possible answer — a few words, a number, or the exact option \
-     letter/text to select. No explanation unless essential.";
+const BRIEF_ANSWER_INSTRUCTION: &str = concat!(
+    "Answer the question below.",
+    answering_rules!(),
+);
+
+fn custom_prompt(config: &AppConfig) -> Option<&str> {
+    config
+        .answer_prompt
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+}
+
+fn screenshot_prompt(config: &AppConfig) -> &str {
+    custom_prompt(config).unwrap_or(DEFAULT_ANSWER_PROMPT)
+}
+
+fn text_answer_instruction(config: &AppConfig) -> &str {
+    custom_prompt(config).unwrap_or(BRIEF_ANSWER_INSTRUCTION)
+}
+
+fn clipboard_answer_instruction(config: &AppConfig) -> &str {
+    custom_prompt(config).unwrap_or(CLIPBOARD_ANSWER_PROMPT)
+}
 
 #[derive(Debug, Error)]
 pub enum AiError {
@@ -62,10 +102,10 @@ pub async fn answer_from_screenshot(
 ) -> Result<String, AiError> {
     let client = client_for_config(config)?;
     let chat_req = ChatRequest::default().append_message(ChatMessage::user(vec![
-        ContentPart::from_text(ANSWER_PROMPT),
+        ContentPart::from_text(screenshot_prompt(config)),
         ContentPart::from_binary_base64("image/jpeg", jpeg_base64, Some("screenshot.jpg".into())),
     ]));
-    exec_chat(&client, config, chat_req, 64).await
+    exec_chat(&client, config, chat_req, 160).await
 }
 
 pub async fn answer_question(config: &AppConfig, question: &str) -> Result<String, AiError> {
@@ -73,8 +113,11 @@ pub async fn answer_question(config: &AppConfig, question: &str) -> Result<Strin
     if question.is_empty() {
         return Err(AiError::Message("Question is empty.".into()));
     }
-    let user_message = format!("{BRIEF_ANSWER_INSTRUCTION}\n\nQuestion:\n{question}");
-    exec_text_message(config, &user_message, 256).await
+    let user_message = format!(
+        "{}\n\nQuestion:\n{question}",
+        text_answer_instruction(config)
+    );
+    exec_text_message(config, &user_message, 320).await
 }
 
 pub async fn answer_from_clipboard_text(
@@ -85,8 +128,8 @@ pub async fn answer_from_clipboard_text(
     if text.is_empty() {
         return Err(AiError::Message("Clipboard is empty or has no text.".into()));
     }
-    let user_message = format!("{CLIPBOARD_ANSWER_PROMPT}\n\n{text}");
-    exec_text_message(config, &user_message, 256).await
+    let user_message = format!("{}\n\n{text}", clipboard_answer_instruction(config));
+    exec_text_message(config, &user_message, 320).await
 }
 
 async fn exec_text_message(

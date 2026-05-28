@@ -32,6 +32,8 @@ export function Setup() {
   const [model, setModel] = useState("");
   const [captureSelect, setCaptureSelect] = useState("primary");
   const [hotkey, setHotkey] = useState(DEFAULT_HOTKEY);
+  const [answerPrompt, setAnswerPrompt] = useState("");
+  const [defaultAnswerPrompt, setDefaultAnswerPrompt] = useState("");
   const [previewOnMonitorSupported, setPreviewOnMonitorSupported] = useState(true);
   const [monitors, setMonitors] = useState<MonitorInfo[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -58,6 +60,8 @@ export function Setup() {
         setHistory(historyList);
         setIsConfigured(summary.configured);
         setHotkey(summary.hotkey || DEFAULT_HOTKEY);
+        setDefaultAnswerPrompt(summary.default_answer_prompt);
+        setAnswerPrompt(summary.answer_prompt ?? summary.default_answer_prompt);
         if (summary.configured) {
           setProvider(summary.provider);
           setCaptureSelect(captureMonitorToSelectValue(summary.capture_monitor));
@@ -110,6 +114,7 @@ export function Setup() {
         model: model.trim() || undefined,
         capture_monitor,
         hotkey: trimmedHotkey,
+        answer_prompt: answerPrompt,
         ...(trimmedKey ? { api_key: trimmedKey } : {}),
       };
       const result = await invoke<ValidationResult>("save_app_config", {
@@ -205,6 +210,34 @@ export function Setup() {
           />
           <p className="setup__hint">
             Used when you click <strong>answer plz</strong> or press your global hotkey.
+          </p>
+        </section>
+
+        <section className="setup__section">
+          <div className="setup__section-header">
+            <h2 className="setup__section-title">Answer prompt</h2>
+            <button
+              type="button"
+              className="setup__reset-prompt"
+              onClick={() => setAnswerPrompt(defaultAnswerPrompt)}
+              disabled={!defaultAnswerPrompt || answerPrompt === defaultAnswerPrompt}
+            >
+              Reset to default
+            </button>
+          </div>
+          <label className="setup__label">
+            Instructions sent to the model
+            <textarea
+              className="setup__textarea"
+              value={answerPrompt}
+              onChange={(e) => setAnswerPrompt(e.target.value)}
+              rows={5}
+              spellCheck={false}
+            />
+          </label>
+          <p className="setup__hint">
+            Used for screenshot, clipboard, and typed questions. Answers come back as{" "}
+            <code>confidence%, answer</code> (e.g. <code>92%, B</code>). Reset restores the default.
           </p>
         </section>
 
