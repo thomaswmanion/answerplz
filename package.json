@@ -1,7 +1,7 @@
 {
   "name": "answerplz",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Screen overlay that screenshots and answers questions with your AI API key",
   "type": "module",
   "scripts": {
