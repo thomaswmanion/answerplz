@@ -10,23 +10,18 @@
   gap: 0.45rem;
 }
 
-.monitor-picker__mode,
-.monitor-picker__identify {
+.monitor-picker__mode {
   padding: 0.45rem 0.7rem;
+  border: 1px solid #3a4560;
   border-radius: 8px;
+  background: #1a2030;
+  color: #c5cde0;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
 }
 
-.monitor-picker__mode {
-  border: 1px solid #3a4560;
-  background: #1a2030;
-  color: #c5cde0;
-}
-
-.monitor-picker__mode:hover,
-.monitor-picker__identify:hover {
+.monitor-picker__mode:hover {
   border-color: #5b8def;
   color: #e8eaef;
 }
@@ -35,13 +30,6 @@
   border-color: #5b8def;
   background: rgba(91, 141, 239, 0.18);
   color: #fff;
-}
-
-.monitor-picker__identify {
-  margin-left: auto;
-  border: 1px solid #4a5568;
-  background: transparent;
-  color: #9aa3b2;
 }
 
 .monitor-picker__canvas {

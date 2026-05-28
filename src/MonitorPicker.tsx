@@ -54,20 +54,6 @@ export function MonitorPicker({
         >
           All displays
         </button>
-        <button
-          type="button"
-          className="monitor-picker__identify"
-          onClick={() => {
-            if (!previewOnMonitorSupported) {
-              return;
-            }
-            void previewSelection("all", true);
-            window.setTimeout(() => void previewSelection(value, true), 2500);
-          }}
-          disabled={!previewOnMonitorSupported}
-        >
-          Identify
-        </button>
       </div>
 
       {layout && layout.items.length > 0 && (
