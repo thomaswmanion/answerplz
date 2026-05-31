@@ -20,6 +20,48 @@ Installers are on **[GitHub Releases](https://github.com/thomaswmanion/answerplz
 
 No API key is bundled — configure your provider on first launch.
 
+### Unsigned builds (Windows & macOS)
+
+Releases are **not code-signed yet**. Your OS or antivirus may warn because the installer comes from an unknown publisher. This is expected for a small open-source app — source is in this repo if you want to inspect or [build it yourself](#build).
+
+**Windows**
+
+1. Run the installer (`answerplz_*_x64-setup.exe`).
+2. If SmartScreen shows **Windows protected your PC**, click **More info**, then **Run anyway**.
+3. If your antivirus blocks it, allow the file or add an exception. You can verify the download came from [GitHub Releases](https://github.com/thomaswmanion/answerplz/releases) for this repository.
+
+**macOS**
+
+Browser downloads get a quarantine flag. Unsigned apps often show a misleading **"answerplz is damaged and can't be opened"** dialog with only **Move to Trash** and **Done**.
+
+**That dialog cannot be bypassed** with right-click → Open or **Open Anyway** in System Settings. You need Terminal once:
+
+1. Open the `.dmg` and copy **answerplz.app** to **Applications**.
+2. Open **Terminal** (Applications → Utilities → Terminal).
+3. Remove the quarantine flag:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/answerplz.app
+```
+
+4. Open **answerplz** from Applications.
+
+If the app is somewhere else, change the path (for example `~/Downloads/answerplz.app`).
+
+After quarantine is cleared, macOS may show a **second**, softer warning — **"cannot be verified"** or **"Not Opened"**. That one *can* use the GUI:
+
+- **macOS 14 and earlier:** right-click the app → **Open** → **Open** (once).
+- **macOS 15 (Sequoia) and later:** try to open the app once, then go to **System Settings → Privacy & Security**, scroll down, click **Open Anyway**, and enter your password. Right-click → Open often no longer works on Sequoia.
+
+If it still won't launch after removing quarantine, run both commands:
+
+```bash
+codesign --force --deep --sign - --timestamp=none /Applications/answerplz.app
+xattr -dr com.apple.quarantine /Applications/answerplz.app
+```
+
+Linux packages (`.AppImage`, `.deb`) are not affected by Windows SmartScreen or macOS Gatekeeper.
+
 ## Features
 
 - **Bring your own key** — OpenAI, Anthropic, Google Gemini, or OpenRouter (one dropdown + API key)
@@ -45,7 +87,9 @@ Config path: `~/.answerplz/config.json` (mode `600` on Unix). Answer history: `~
 
 ### macOS permissions
 
-On first use you may need to grant **Screen Recording** (for screenshots) and **Accessibility** (for global hotkeys) in **System Settings → Privacy & Security**.
+Screenshots require **Screen Recording** in **System Settings → Privacy & Security → Screen Recording** (enable **answerplz**, then restart the app). Without it, captures can succeed but show blank content and the model will reply with useless answers like “No answer”.
+
+**Accessibility** (for global hotkeys) may also be required in the same settings pane.
 
 ## Supported providers
 
@@ -53,10 +97,10 @@ Pick one in setup and paste that provider’s API key. Default vision models:
 
 | Provider    | Default model              |
 |------------|----------------------------|
-| OpenAI     | `gpt-4o-mini`              |
-| Anthropic  | `claude-3-5-haiku-latest`  |
-| Google Gemini | `gemini-2.5-flash`      |
-| OpenRouter | `openai/gpt-4o-mini`       |
+| OpenAI     | `gpt-5.4-mini`              |
+| Anthropic  | `claude-haiku-4-5`          |
+| Google Gemini | `gemini-3.5-flash`       |
+| OpenRouter | `openai/gpt-5.4-mini`       |
 
 Use **Advanced → Model override** only if you want a different model ID.
 

@@ -115,8 +115,32 @@ fn capture_all() -> Result<CapturedScreen, ScreenshotError> {
 }
 
 #[cfg(target_os = "macos")]
+fn macos_screen_capture_granted() -> bool {
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGPreflightScreenCaptureAccess() -> bool;
+        fn CGRequestScreenCaptureAccess() -> bool;
+    }
+
+    unsafe {
+        if CGPreflightScreenCaptureAccess() {
+            return true;
+        }
+        CGRequestScreenCaptureAccess()
+    }
+}
+
+#[cfg(target_os = "macos")]
 fn capture_macos_display(display_id: Option<u32>) -> Result<CapturedScreen, ScreenshotError> {
     use std::process::Command;
+
+    if !macos_screen_capture_granted() {
+        return Err(ScreenshotError::Capture(
+            "Screen Recording permission is required for screenshots. Open System Settings → \
+             Privacy & Security → Screen Recording, enable answerplz, then restart the app."
+                .into(),
+        ));
+    }
 
     let path = std::env::temp_dir().join(format!(
         "answerplz-{}.jpg",

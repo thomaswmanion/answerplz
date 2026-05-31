@@ -88,9 +88,9 @@ pub async fn validate_config(config: &AppConfig) -> ValidationResult {
 async fn validate_config_inner(config: &AppConfig) -> Result<(), AiError> {
     let client = client_for_config(config)?;
     let chat_req = ChatRequest::default().append_message(ChatMessage::user("Reply with only: ok"));
-    let options = ChatOptions::default().with_max_tokens(8).with_temperature(0.0);
+    let options = chat_options_for_model(&config.model(), 8);
     client
-        .exec_chat(&config.model(), chat_req, Some(&options))
+        .exec_chat(model_for_request(config)?, chat_req, Some(&options))
         .await
         .map_err(ai_error)?;
     Ok(())
@@ -148,11 +148,10 @@ async fn exec_chat(
     chat_req: ChatRequest,
     max_tokens: u32,
 ) -> Result<String, AiError> {
-    let options = ChatOptions::default()
-        .with_max_tokens(max_tokens)
-        .with_temperature(0.0);
+    let model = model_for_request(config)?;
+    let options = chat_options_for_model(&model.model_name, max_tokens);
     let response = client
-        .exec_chat(&config.model(), chat_req, Some(&options))
+        .exec_chat(model, chat_req, Some(&options))
         .await
         .map_err(ai_error)?;
     response
@@ -160,6 +159,32 @@ async fn exec_chat(
         .map(|t| t.trim().to_string())
         .filter(|t| !t.is_empty())
         .ok_or_else(|| AiError::Message("Model returned an empty response.".into()))
+}
+
+fn model_for_request(config: &AppConfig) -> Result<ModelIden, AiError> {
+    let name = config.model();
+    let kind = match config.provider {
+        Provider::Openai => AdapterKind::from_model(&name).map_err(|e| {
+            AiError::Message(format!("Unsupported OpenAI model '{name}': {e}"))
+        })?,
+        Provider::Anthropic => AdapterKind::Anthropic,
+        Provider::Google => AdapterKind::Gemini,
+        // OpenRouter exposes an OpenAI-compatible chat API.
+        Provider::Openrouter => AdapterKind::OpenAI,
+    };
+    Ok(ModelIden::new(kind, name))
+}
+
+fn chat_options_for_model(model_name: &str, max_tokens: u32) -> ChatOptions {
+    let mut options = ChatOptions::default().with_max_tokens(max_tokens);
+    // Reasoning-only OpenAI models reject non-default temperature.
+    if !model_name.starts_with("o1")
+        && !model_name.starts_with("o3")
+        && !model_name.starts_with("o4")
+    {
+        options = options.with_temperature(0.0);
+    }
+    options
 }
 
 fn client_for_config(config: &AppConfig) -> Result<Client, AiError> {

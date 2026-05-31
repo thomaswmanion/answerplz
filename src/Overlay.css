@@ -2,6 +2,7 @@ html.overlay-window,
 html.overlay-window body,
 html.overlay-window #root {
   background: transparent !important;
+  height: 100%;
 }
 
 .overlay-root {
@@ -13,7 +14,7 @@ html.overlay-window #root {
   box-sizing: border-box;
   width: 100%;
   min-height: 100%;
-  padding: 0.35rem 0.35rem 0.55rem;
+  padding: 0.35rem;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   pointer-events: none;
 }

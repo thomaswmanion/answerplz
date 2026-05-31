@@ -78,25 +78,25 @@ export const PROVIDERS: ProviderOption[] = [
     id: "openai",
     label: "OpenAI",
     keyHint: "sk-… from platform.openai.com",
-    defaultModel: "gpt-4o-mini",
+    defaultModel: "gpt-5.4-mini",
   },
   {
     id: "anthropic",
     label: "Anthropic (Claude)",
     keyHint: "sk-ant-… from console.anthropic.com",
-    defaultModel: "claude-3-5-haiku-latest",
+    defaultModel: "claude-haiku-4-5",
   },
   {
     id: "google",
     label: "Google Gemini",
     keyHint: "API key from aistudio.google.com",
-    defaultModel: "gemini-2.5-flash",
+    defaultModel: "gemini-3.5-flash",
   },
   {
     id: "openrouter",
     label: "OpenRouter (many models)",
     keyHint: "sk-or-… from openrouter.ai",
-    defaultModel: "openai/gpt-4o-mini",
+    defaultModel: "openai/gpt-5.4-mini",
   },
 ];
 

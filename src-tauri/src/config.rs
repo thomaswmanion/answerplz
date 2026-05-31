@@ -15,10 +15,10 @@ pub enum Provider {
 impl Provider {
     pub fn default_model(&self) -> &'static str {
         match self {
-            Provider::Openai => "gpt-4o-mini",
-            Provider::Anthropic => "claude-3-5-haiku-latest",
-            Provider::Google => "gemini-2.5-flash",
-            Provider::Openrouter => "openai/gpt-4o-mini",
+            Provider::Openai => "gpt-5.4-mini",
+            Provider::Anthropic => "claude-haiku-4-5",
+            Provider::Google => "gemini-3.5-flash",
+            Provider::Openrouter => "openai/gpt-5.4-mini",
         }
     }
 }
